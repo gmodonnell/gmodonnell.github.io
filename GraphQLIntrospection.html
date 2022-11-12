@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="utf-8">
+
+<link rel="stylesheet" type="text/css" href="site.css"/>
+
+<title>GraphQL Introspection Enumeration</title>
+
+
+</head>
+
+<body>
+<!-- Notice how you can apply multiple classes -->
+<!-- Using a space in the class attribute -->
+<h1 class="title flex-title">
+	<span class="title-main">Graham O'Donnell</span>
+	<span class="title-note">Hacker, Builder, Developer</span>
+</h1>
+<p>
+fragment FullType on __Type {
+  kind
+  name
+  fields(includeDeprecated: true) {
+    name
+    args {
+      ...InputValue
+    }
+    type {
+      ...TypeRef
+    }
+    isDeprecated
+    deprecationReason
+  }
+  inputFields {
+    ...InputValue
+  }
+  interfaces {
+    ...TypeRef
+  }
+  enumValues(includeDeprecated: true) {
+    name
+    isDeprecated
+    deprecationReason
+  }
+  possibleTypes {
+    ...TypeRef
+  }
+}
+fragment InputValue on __InputValue {
+  name
+  type {
+    ...TypeRef
+  }
+  defaultValue
+}
+fragment TypeRef on __Type {
+  kind
+  name
+  ofType {
+    kind
+    name
+    ofType {
+      kind
+      name
+      ofType {
+        kind
+        name
+        ofType {
+          kind
+          name
+          ofType {
+            kind
+            name
+            ofType {
+              kind
+              name
+              ofType {
+                kind
+                name
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+query IntrospectionQuery {
+  __schema {
+    queryType {
+      name
+    }
+    mutationType {
+      name
+    }
+    types {
+      ...FullType
+    }
+    directives {
+      name
+      locations
+      args {
+        ...InputValue
+      }
+    }
+  }
+}
+</p>
+
+
+</body>

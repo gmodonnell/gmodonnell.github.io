@@ -1,0 +1,68 @@
+/* CSS for personal reference. Used on personal website */
+
+
+/* Globals are written for existing html tags */
+body {
+	padding: 6.25rem;
+	font-size: 1.5rem; /* 24px */
+}
+
+p, ul {
+	margin-left: 10rem;
+	padding-left: 20rem;
+	margin-right: 10rem;
+	font-size: 20px;
+	max-width: 100rem;
+}
+
+/* A basic container. Will create a row */
+.flex-container {
+	display: flex;
+	flex-direction: row;
+}
+
+.title {
+	border-bottom: 1px solid #ccc;
+	max-width: 100rem;
+	margin: 40px auto;
+}
+
+.title-note {
+	font-size: 60%;
+	color: #999;
+}
+
+.flex-title {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	/* Still not sure how below line works. */
+	> span {
+		white-space: nowrap;
+	}
+	.title-main {
+		flex-grow: 1;
+	}
+}
+
+
+/* Responsive layout. Will convert flex-container to a column if the device is too thin */
+@media all and (max-width: 800px) {
+	.flex-container {
+		flex-direction: column;
+	}
+	.navigation {
+		justify-content: space-around;
+	}
+}
+
+/* Small Screen Layout */
+@media all and (max-width: 500px) {
+	.flex-container {
+		flex-direction: column;
+	}
+	.navigation {
+		flex-direction: column;
+	}
+}
