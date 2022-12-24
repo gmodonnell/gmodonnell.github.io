@@ -8,7 +8,9 @@ body {
 }
 
 p, ul {
-	margin-right: 10rem;
+	padding-left: 10%;
+    padding-right: 10%;
+    margin-right: 10rem;
 	font-size: 20px;
 	max-width: 100rem;
 }
