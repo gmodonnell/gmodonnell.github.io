@@ -6,7 +6,7 @@
 </head>
 
 <body>
-<h1>SecureeSHell</h1>
+<h1>SecureSHell</h1>
 <a href="/index.html">Home</a>
 <p>
 SSH or SecureSHell uses the Diffie-Hellman key exchange to maintain
@@ -51,6 +51,12 @@ Here is an example:
     exponent a. This is the Discrete Log Problem and is computationally
     difficult for large values.
 -->
+<p>
+SSH mitigates the risk of session replay attacks but does not 
+eliminate the risk entirely because you can still have your 
+session hijacked.
+</p>
+
 <p>
 *Perfect Forward Secrecy is a security concept defining the access 
 threat actors have if your keys are compromised. In the ideal Perfect
