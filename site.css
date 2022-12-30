@@ -1,6 +1,3 @@
-/* CSS for personal reference. Used on personal website */
-
-
 /* Globals are written for existing html tags */
 body {
 	padding: 6.25rem;
@@ -13,6 +10,12 @@ p, ul {
     margin-right: 10rem;
 	font-size: 20px;
 	max-width: 100rem;
+}
+
+.header {
+    background: #242930;
+    
+    
 }
 
 /* A basic container. Will create a row */
