@@ -1,71 +1,39 @@
-/* Globals are written for existing html tags */
 body {
-	padding: 6.25rem;
 	font-size: 1.5rem; /* 24px */
+    font-family: sans-serif;
+    background: #afbac4;
 }
 
-p, ul {
-	padding-left: 10%;
-    padding-right: 10%;
-    margin-right: 10rem;
-	font-size: 20px;
-	max-width: 100rem;
+
+h1 {
+    color: #fff;
+}
+
+h2 {
+    color: #fff;
+}
+
+
+a {
+    color: #a53898;
+    transition: color .36s;
+    transition-property: color;
+    transition-duration: 0.36s;
+    transition-delay: 0s;
+    text-decoration: none;
+}
+
+a:hover {
+    color: #fff;
 }
 
 .header {
     background: #242930;
+    position: fixed;
+    width:20rem;
+    min-height:100vh;
+    top:0;
+    right:0;
+    padding:2.5em;
     
-    
-}
-
-/* A basic container. Will create a row */
-.flex-container {
-	display: flex;
-	flex-direction: row;
-}
-
-.title {
-	border-bottom: 1px solid #ccc;
-	max-width: 100rem;
-	margin: 40px auto;
-}
-
-.title-note {
-	font-size: 60%;
-	color: #999;
-}
-
-.flex-title {
-	display: flex;
-	align-items: flex-end;
-	justify-content: space-between;
-	flex-wrap: wrap;
-	/* Still not sure how below line works. */
-	> span {
-		white-space: nowrap;
-	}
-	.title-main {
-		flex-grow: 1;
-	}
-}
-
-
-/* Responsive layout. Will convert flex-container to a column if the device is too thin */
-@media all and (max-width: 800px) {
-	.flex-container {
-		flex-direction: column;
-	}
-	.navigation {
-		justify-content: space-around;
-	}
-}
-
-/* Small Screen Layout */
-@media all and (max-width: 500px) {
-	.flex-container {
-		flex-direction: column;
-	}
-	.navigation {
-		flex-direction: column;
-	}
 }
