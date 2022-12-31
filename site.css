@@ -75,9 +75,10 @@ pre {
     }
     
     .container {
-        max-width: 66rem;
+        /*max-width: 66rem;*/
         text-align: right;
-        margin-right:20rem;        
+        margin-right:20rem;
+        /*margin-left:80rem;*/
     }
     
     .404err {
