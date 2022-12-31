@@ -3,18 +3,12 @@
 }
 
 body {
-    font-size:1.25em;
+    font-size:1.3em;
     font-family: sans-serif;
     color:#afbac4;
     margin:0;
     background:#353b43;
 }
-
-
-h1,h2,h3,h4,h5,h6 {
-    color: #fff;
-}
-
 
 a {
     color: #a53898; /* purple */
@@ -32,6 +26,15 @@ a:hover {
 code {
     font-size:1em;
     color:#afbac4cc
+}
+
+h1,h2,h3,h4,h5,h6 {
+    color: #fff;
+}
+
+pre {
+    margin:0;
+    overflow:auto
 }
 
 .container {
@@ -79,6 +82,24 @@ code {
     
     .404err {
         text-align: center;
+    }
+    
+    .dexlist {
+        padding:0
+    }
+    
+    .dexlist-item {
+        list-style:none;
+        padding: .3em 0
+    }
+    
+    .dexlist-item:not(:last-child) {
+        border-bottom:1px dashed #ffffff4d
+    }
+    
+    .dexlist-deets {
+        display:block;
+        font-size:.66em
     }
     
     
