@@ -44,7 +44,7 @@ pre {
 .header {
     background:#242930;
     padding:2.5em;
-    text-align:right;
+    text-align:left;
     
 }
 /*
@@ -69,15 +69,15 @@ pre {
     .header {
         position: fixed;
         top:0;
-        right:0;
+        /*right:0;*/
         width:20rem;
         min-height:100vh;
     }
     
     .container {
-        /*max-width: 66rem;*/
-        text-align: right;
-        margin-right:20rem;
+        max-width: 66rem;
+        text-align: left;
+        margin-left:20rem;
         /*margin-left:80rem;*/
     }
     
