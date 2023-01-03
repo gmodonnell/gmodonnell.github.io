@@ -47,6 +47,23 @@ pre {
     text-align:left;
     
 }
+.dexlist {
+    padding:0
+}
+    
+.dexlist-item {
+    list-style:none;
+    padding: .3em 0
+}
+    
+.dexlist-item:not(:last-child) {
+    border-bottom:1px dashed #ffffff4d
+}
+    
+.dexlist-deets {
+    display:block;
+    font-size:.66em
+}
 /*
 .colors {
     #bb7c35 -> orange
@@ -84,26 +101,6 @@ pre {
     .404err {
         text-align: center;
     }
-    
-    .dexlist {
-        padding:0
-    }
-    
-    .dexlist-item {
-        list-style:none;
-        padding: .3em 0
-    }
-    
-    .dexlist-item:not(:last-child) {
-        border-bottom:1px dashed #ffffff4d
-    }
-    
-    .dexlist-deets {
-        display:block;
-        font-size:.66em
-    }
-    
-    
 }
 
 @media(max-width:940px) {
@@ -111,3 +108,4 @@ pre {
         text-align:center;
     }
 }
+
