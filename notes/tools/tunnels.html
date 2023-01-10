@@ -92,6 +92,19 @@ Set a local port forward from the client device to the lab environment.
 <li>
 The data will now kiss in the middle.
 </li>
+</ul>
+<p>
+Dynamic Port Forwards let you push all data from a client through to
+the target machine via a single port. Once it gets to the target 
+device, the packets are then sorted to local ports. Can break.
+</p>
+<blockquote>
+<pre>
+<code>
+ssh -D [port] user@domain
+</code>
+</pre>
+</blockquote>
 <p>
 I don't X-11 forward for GUI applications because I don't know 
 enough about it to run it securely. 
