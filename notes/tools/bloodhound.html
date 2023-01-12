@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<title>Graham O'Donnell</title>
+<meta name="author" content="Graham O'Donnell">
+<meta name="description" content="I hope you learn something here">
+<meta charset="utf-8">
+<link rel="shortcut icon" href="">
+<link rel="stylesheet" href="https://gmodonnell.github.io/site.css"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico">
+</head>
+
+<body>
+<header class="header">
+<a href="https://gmodonnell.github.io"><h1>Graham O'Donnell</h1></a>
+<h2 style="color:#bb7c35">Security Consultant</h2>
+<nav>
+<a href="/notes/index.html">Notes</a>
+-
+<a href="/writeups/index.html">Writeups</a>
+-
+<a href="/eer/index.html">Resources</a>
+</nav>
+<p>
+This is my virtual notebook. I keep notes here on security stuff.
+</p>
+</header>
+<main class="container">
+<h2>BloodHound Active Directory</h2>
+<article>
+<p>
+BloodHound is an awesome tool that makes attacking Active Directory super easy.
+It is also almost always picked up by AntiVirus because it's so popular. There
+are a couple ways to get around AV, and aside from the traditional methods, you
+can get around AV pretty easily to collect information with SharpHound provided
+the following conditions are met:
+<blockquote>
+<pre>
+<code>
+You have a device connected to the target network, but not to the domain.
+You have valid credentials for a domain-connected user.
+You have identified a domain controller on the network.
+</code>
+</pre>
+</blockquote>
+Now, you can run Sharphound on your network connected device, and direct the 
+protocols toward the domain. Here's how:
+<blockquote>
+<pre>
+<code>
+1. Assign the previously identified Domain Controller's IP as your system DNS server.
+2. Use your captured credentials to generate a CMD shell as that user:
+    C:\> runas /netonly /user:[DOMAIN]\[USER] cmd.exe
+3. Verify your domain authentication:
+    C:\> net view \\[DOMAIN]\
+4. Run SharpHound from your device, and point it at the proper domain:
+    C:\> SharpHound.exe -d [DOMAIN].local
+</code>
+</pre>
+</blockquote>
+I have found that often times, running this command as the docs recommend will fail.
+The docs also recommend you use the <code>OverrideUserName</code> flag with the 
+above command, but this will also fail. The only reliable way I have discovered is to
+force your credentials down SharpHound's throat as follows:
+<blockquote>
+<code>
+<pre>
+C:\> SharpHound.exe -d [DOMAIN].local --OverrideUserName [USER] --LdapUsername [USER] --LdapPassword [PASS]
+</pre>
+</code>
+</blockquote>
+Do this on the shell you spawned with <code>runas /netonly</code> and it won't fail.
+Because you've covered all your bases.
+</p>
+</article>
+</main>
+</body>
