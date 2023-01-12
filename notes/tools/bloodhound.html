@@ -73,6 +73,19 @@ C:\> SharpHound.exe -d [DOMAIN].local --OverrideUserName [USER] --LdapUsername [
 Do this on the shell you spawned with <code>runas /netonly</code> and it won't fail.
 Because you've covered all your bases.
 </p>
+<h3>Running from Linux</h3>
+<p>
+It's a pain to run PowerShell from Linux the way BloodHound wants it done, so use
+this <a href="https://github.com/fox-it/BloodHound.py">BloodHound Python</a>
+implementation instead. You may have to spoonfeed it to get it to work:
+<blockquote>
+<code>
+<pre>
+bloodhound-python --domain [DOMAIN] -c All -ns [NS IP] -dc [DC NAME] -u [USER] -p [PASS]
+</pre>
+</code>
+</blockquote>
+</p>
 </article>
 </main>
 </body>
