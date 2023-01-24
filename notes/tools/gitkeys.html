@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<title>Graham O'Donnell</title>
+<meta name="author" content="Graham O'Donnell">
+<meta name="description" content="I hope you learn something here">
+<meta charset="utf-8">
+<link rel="shortcut icon" href="">
+<link rel="stylesheet" href="https://gmodonnell.github.io/site.css"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico">
+
+</head>
+
+<body>
+<header class="header">
+<a href="https://gmodonnell.github.io"><h1>Graham O'Donnell</h1></a>
+<h2 style="color:#bb7c35">Security Consultant</h2>
+<nav>
+<a href="/notes/index.html">Notes</a>
+-
+<a href="/writeups/index.html">Writeups</a>
+-
+<a href="/eer/index.html">Resources</a>
+</nav>
+<p>
+This is my virtual notebook. I keep notes here on security stuff.
+</p>
+</header>
+<main class="container">
+
+<article>
+	<h2>SSH Keys for GitHub</h2>
+	<p>
+	I am writing this because every time I get a new laptop I
+	always forget this process and it's easier to write it down
+	in a single, concise manner rather than reading through the 
+	two necessary GitHub articles that appear.
+	</p>
+	<blockquote>
+	<pre>
+	<code>
+	ssh-keygen -t ed25519 -C "email@email.dom"
+
+	eval "$(ssh-agent -s)"
+
+	ssh-add ~/.ssh/[keyfile]
+	</code>
+	</pre>
+	</blockquote>
+	<p>
+	This is how you make and add the key on your device. Then you add
+	your public key on the website. When you clone repos, you have to 
+	clone them using ssh in the following format in order to be able 
+	to commit using ssh.
+	</p>
+	<blockquote>
+		<pre>
+		<code>
+		git clone git@github.com:/[author]/[repo]
+		</code>
+		</pre>
+	</blockquote>
+
+
+
+
+
+
+</article>
+</main>
+</body>
