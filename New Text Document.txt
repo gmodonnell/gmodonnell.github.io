@@ -1,0 +1,167 @@
+Practical Bash Usage – Example 3
+
+As penetration testers, we are always trying to find efficiencies to minimize the time we spend analyzing data, especially the volumes of data we recover during various scans.
+
+Let's assume we are tasked with scanning a class C subnet to identify web servers and determine whether or not they present an interesting attack surface. Port scanning is the process of inspecting TCP or UDP ports on a remote machine with the intention of detecting what services are running on the target and potentially what attack vectors exist. We will discuss port scanning in much more detail in another module, but for now, let's keep it general as this is a great example that shows how Bash scripting can automate a rather tedious task.
+
+In order to accomplish our goal, we would first port scan the entire subnet to pinpoint potential open web services, then we could manually browse their web pages.
+
+To begin, let's create a temporary folder to be used for this exercise:
+
+kali@kali:~$ mkdir temp
+
+kali@kali:~$ cd temp/
+
+    Listing 51 - Creating a temporary folder to be used for this exercise
+
+Now that we've created the directory and have entered it with cd, let's move on to the more interesting part, a scan of the class C subnet. We will only focus on port 80 to keep the scope somewhat manageable and we will use nmap (which we discuss in a later module) as our port scanning tool:
+
+kali@kali:~/temp$ sudo nmap -A -p80 --open 10.11.1.0/24 -oG nmap-scan_10.11.1.1-254
+Starting Nmap 7.60 ( https://nmap.org ) at 2019-03-18 18:57 EDT
+Nmap scan report for 10.11.1.8
+Host is up (0.030s latency).
+
+PORT   STATE SERVICE VERSION
+80/tcp open  http    Apache httpd 2.0.52 ((CentOS))
+| http-methods: 
+|_  Potentially risky methods: TRACE
+| http-robots.txt: 2 disallowed entries 
+|_/internal/  /tmp/ 
+|_http-server-header: Apache/2.0.52 (CentOS)
+|_http-title: Site doesn't have a title (text/html; charset=UTF-8).
+MAC Address: 00:50:56:89:20:34 (VMware)
+Warning: OSScan results may be unreliable because we could not find at least 1 open an
+Device type: general purpose|WAP|firewall|proxy server|PBX
+Running (JUST GUESSING): Linux 2.6.X (92%), ZoneAlarm embedded (90%), Cisco embedded 
+Aggressive OS guesses: Linux 2.6.18 (92%), Linux 2.6.9 (92%), Linux 2.6.9 - 2.6.27 (90
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 1 hop
+
+TRACEROUTE
+HOP RTT      ADDRESS
+1   30.19 ms 10.11.1.8
+
+Nmap scan report for 10.11.1.10
+Host is up (0.030s latency).
+
+PORT   STATE SERVICE VERSION
+80/tcp open  http    Microsoft IIS httpd 6.0
+| http-methods: 
+|_  Potentially risky methods: TRACE
+|_http-server-header: Microsoft-IIS/6.0
+|_http-title: Under Construction
+MAC Address: 00:50:56:89:06:D0 (VMware)
+Warning: OSScan results may be unreliable because we could not find at least 1 open an
+Device type: general purpose|WAP
+Running (JUST GUESSING): Microsoft Windows 2003|XP|2000 (89%), Apple embedded (86%)
+OS CPE: cpe:/o:microsoft:windows_server_2003::sp2 cpe:/o:microsoft:windows_xp::sp3 cpe
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 1 hop
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
+
+TRACEROUTE
+HOP RTT      ADDRESS
+1   30.41 ms 10.11.1.10
+...
+
+    Listing 52 - Scanning the entire class C subnet to look for web servers
+
+This is a pretty straightforward scan, with -A for aggressive scanning, -p to specify the port or port range, --open to only return machines with open ports, and -oG to save the scan results in greppable format. Again, don't fret if nmap is new to you. We will go into details later, but nmap certainly provided a decent amount of output to work with.
+
+Let's cat the output file to familiarize ourselves with its format:
+
+kali@kali:~/temp$ cat nmap-scan_10.11.1.1-254 
+# Nmap 7.60 scan initiated Sun Mar 18 18:57:48 2019 as: nmap -A -p80 --open -oG nmap-scan_10.11.1.1-254 10.11.1.0/24
+Host: 10.11.1.8 ()	Status: Up
+Host: 10.11.1.8 ()	Ports: 80/open/tcp//http//Apache httpd 2.0.52 ((CentOS))/	Seq Index: 197	IP ID Seq: All zeros
+Host: 10.11.1.10 ()	Status: Up
+Host: 10.11.1.10 ()	Ports: 80/open/tcp//http//Microsoft IIS httpd 6.0/	Seq Index: 256	IP ID Seq: Incremental
+Host: 10.11.1.13 ()	Status: Up
+Host: 10.11.1.13 ()	Ports: 80/open/tcp//http//Microsoft IIS httpd 5.1/	Seq Index: 136	IP ID Seq: Incremental
+...
+
+    Listing 53 - Becoming familiar with the resulting file from our nmap scan
+
+Interestingly, it looks like each IP address is repeated twice, the first line displaying the machine status, and the second displaying the port number being scanned. Since we are only interested in unique IP addresses, some clean up is necessary. Let's grep for the lines containing port 80:
+
+kali@kali:~/temp$ cat nmap-scan_10.11.1.1-254 | grep 80
+# Nmap 7.60 scan initiated Sun Mar 18 18:57:48 2019 as: nmap -A -p80 --open -oG nmap-scan_10.11.1.1-254 10.11.1.0/24
+Host: 10.11.1.8 ()	Ports: 80/open/tcp//http//Apache httpd 2.0.52 ((CentOS))/	Seq Index: 197	IP ID Seq: All zeros
+Host: 10.11.1.10 ()	Ports: 80/open/tcp//http//Microsoft IIS httpd 6.0/	Seq Index: 256	IP ID Seq: Incremental
+Host: 10.11.1.13 ()	Ports: 80/open/tcp//http//Microsoft IIS httpd 5.1/	Seq Index: 136	IP ID Seq: Incremental
+...
+
+    Listing 54 - Searching the file for port 80 using the grep command
+
+This is a great start but notice that the first line is irrelevant. To exclude it, we will grep again with -v, which is a "reverse-grep", showing only lines that do not match the search string. In this case, we don't want any lines that contain the case-sensitive keyword "Nmap":
+
+kali@kali:~/temp$ cat nmap-scan_10.11.1.1-254 | grep 80 | grep -v "Nmap"
+Host: 10.11.1.8 ()	Ports: 80/open/tcp//http//Apache httpd 2.0.52 ((CentOS))/	Seq Index: 197	IP ID Seq: All zeros
+Host: 10.11.1.10 ()	Ports: 80/open/tcp//http//Microsoft IIS httpd 6.0/	Seq Index: 256	IP ID Seq: Incremental
+Host: 10.11.1.13 ()	Ports: 80/open/tcp//http//Microsoft IIS httpd 5.1/	Seq Index: 136	IP ID Seq: Incremental
+...
+
+    Listing 55 - Excluding any lines matching the Nmap keyword
+
+Our output is looking much better. Let's try to extract just the IP addresses, as this is all we are really interested in. To do so, we'll use awk to print the second field, using T as a delimiter:
+
+kali@kali:~/temp$ cat nmap-scan_10.11.1.1-254 | grep 80 | grep -v "Nmap" | awk '{print $2}'
+10.11.1.8
+10.11.1.10
+10.11.1.13
+10.11.1.14
+10.11.1.22
+10.11.1.24
+10.11.1.31
+10.11.1.39
+10.11.1.49
+10.11.1.50
+10.11.1.71
+...
+
+    Listing 56 - Using the awk command to print a list of IP addresses
+
+Good. This looks like a clean IP address list. For the next step, we'll use a Bash one-liner to loop through the list of IPs above and run cutycapt,1 which is a Qt WebKit web page rendering capture utility. We will use --url to specify the target web site and --out to specify the name of the output file:
+
+kali@kali:~/temp$ for ip in $(cat nmap-scan_10.11.1.1-254 | grep 80 | grep -v "Nmap" | awk '{print $2}'); do cutycapt --url=$ip --out=$ip.png;done
+
+    Listing 57 - Using cutycapt to capture screenshots from all web servers
+
+Once our loop is finished and we have a prompt, we can examine the list of output files that were created by our Bash one-liner with the -1 option to ls, which lists one file per line, suppressing additional details:
+
+kali@kali:~/temp$ ls -1 *.png
+10.11.1.10.png
+10.11.1.115.png
+10.11.1.116.png
+10.11.1.128.png
+10.11.1.13.png
+10.11.1.133.png
+10.11.1.14.png
+10.11.1.202.png
+10.11.1.209.png
+10.11.1.217.png
+...
+
+    Listing 58 - Exploring the results from our Bash one-liner
+
+Outstanding. We are getting closer to our goal. We could examine these files individually but the more attractive choice is to once again put our scripting knowledge to work and see if there is anything else we can automate. This will require not only Bash scripting skills but also basic HTML2 knowledge:
+
+kali@kali:~/temp$ cat ./pngtohtml.sh
+#!/bin/bash
+# Bash script to examine the scan results through HTML.
+
+echo "<HTML><BODY><BR>" > web.html
+
+ls -1 *.png | awk -F : '{ print $1":\n<BR><IMG SRC=\""$1""$2"\" width=600><BR>"}' >> web.html
+
+echo "</BODY></HTML>" >> web.html
+
+kali@kali:~/temp$ chmod +x ./pngtohtml.sh
+
+kali@kali:~/temp$ ./pngtohtml.sh 
+
+kali@kali:~/temp$ firefox web.html 
+
+    Listing 59 - Creating a page to look at all the images from our scan results
+
+This script builds an HTML file (web.html), starting with the most basic tags. Then, the ls and awk statements insert each .PNG file name into an HTML IMG tag and append this to our web.html file. Finally, we append HTML end tags into the file, make the script executable, and view it in our browser. The result is simple, but effective, giving us a view of each web server's main page:

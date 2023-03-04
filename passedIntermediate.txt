@@ -1,0 +1,26 @@
+grep -E '[^\/]*\.js[^\s"?]*' -o "$1" | cut -d " " -f1 | sort -uf
+
+#!/bin/bash                                                                             for ip in $(seq $2 $3); do                                                                  host="$1.$ip"                                                                               if ping -c 1 "$1.$ip" 2>/dev/null | grep -q " 0%"; then                                             echo "$host"                                                                fi                                                                      
+done 
+
+#!.bin/python3                                                                          import sys                                                                              import os                                                                               for ip in range(int(sys.argv[2]), int(sys.argv[3])+1):                                      host=sys.argv[1]+"."+str(ip)                                                            response = os.system("ping -c 1 " + host + " 2>/dev/null | grep -q ' 0%'")              if response == 0:                                                                           print(host)
+
+
+TURN A WEBPAGE INTO IP ADDRESSES:
+grep -o "[^/]*.<domain>.<tld>" <FILE> | sort -u > sitelist.txt
+for url in $(cat sitelist.txt); do host $url; done | grep "has address" | cut -d " " -f 4 | sort -u
+
+This pulls all links from an html file for a specified domain and puts them in a list.
+Second command iterates list and resolves IPv4 then trims and sorts.
+
+#!/bin/bash
+# Bash script to search for a given exploit and download all matches.
+
+for e in $(searchsploit afd windows -w -t | grep http | cut -f 2 -d "|")
+
+do
+  exp_name=$(echo $e | cut -d "/" -f 5)
+  url=$(echo $e | sed 's/exploits/raw/')
+  wget -q --no-check-certificate $url -O $exp_name
+done
+
