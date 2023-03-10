@@ -39,28 +39,28 @@ This is my virtual notebook. I keep notes here on security stuff.
 	</p>
 	<blockquote>
 	<pre>
-	<code>
-	ssh-keygen -t ed25519 -C "email@email.dom"
+<code>
+ssh-keygen -t ed25519 -C "email@email.dom"
 
-	eval "$(ssh-agent -s)"
+eval "$(ssh-agent -s)"
 
-	ssh-add ~/.ssh/[keyfile]
-	</code>
-	</pre>
-	</blockquote>
+ssh-add ~/.ssh/[keyfile]
+</code>
+</pre>
+</blockquote>
 	<p>
 	This is how you make and add the key on your device. Then you add
 	your public key on the website. When you clone repos, you have to 
 	clone them using ssh in the following format in order to be able 
 	to commit using ssh.
 	</p>
-	<blockquote>
-		<pre>
-		<code>
-		git clone git@github.com:/[author]/[repo]
-		</code>
-		</pre>
-	</blockquote>
+<blockquote>
+<pre>
+<code>
+git clone git@github.com:/[author]/[repo]
+</code>
+</pre>
+</blockquote>
 
 
 
