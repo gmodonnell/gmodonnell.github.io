@@ -88,6 +88,31 @@ bloodhound-python --domain [DOMAIN] -c All -ns [NS IP] -dc [DC NAME] -u [USER] -
 The Domain Controller name will be the prefix, not the FQDN. The Domain will be
 everything but the prefix, so when you combine the two options you will have a FQDN.
 </p>
+
+<h3>Directing Attention</h3>
+<p>
+Many paths will not be revealed to you if you can't properly parse through the
+domain and select your prioritized targets properly. There are a few recommended
+targets which need to be marked that are not marked by default. These are:
+</p>
+<ul>
+<li>Groups with the AdminCount flag, or local admin allowed</li>
+<li>Reset Password Privilege Groups</li>
+<li>Unconstrained Delegation that aren't DCs</li>
+<li>Azure AD Connect Servers</li>
+<li>Certificate Publishers</li>
+</ul>
+<p>
+We should also check to see if there are any LAPS non-enabled computers. This 
+can aid lateral movement through the network.
+</p>
+
+<hr>
+<p>
+Credits for HVT focusing goes to n00py and <a href="https://www.n00py.io/2023/02/cactuscon-2023-bloodhound-unleashed/">
+his talk at CactusCon 11</a>. 
+</p>
+
 </article>
 </main>
 </body>
