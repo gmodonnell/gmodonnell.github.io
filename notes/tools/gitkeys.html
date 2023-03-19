@@ -61,7 +61,23 @@ git clone git@github.com:/[author]/[repo]
 </code>
 </pre>
 </blockquote>
-
+<p>
+If you mess up and need cloned a repo over https, pushing to the repo
+will cause you to try to do it over https which is deprecated so you
+will have to set the repo push destination to ssh using the following 
+command
+</p>
+<blockquote>
+<pre>
+<code>
+git remote set-url [remote name] [remote url]
+</code>
+</pre>
+</blockquote>
+<p>
+The <code>[remote name]</code> is usually <code>origin</code> or <code>main</code>, and the 
+<code>[remote url]</code> is in the format <code>git@github.com/[author]/[repo]</code>.
+</p>
 
 
 

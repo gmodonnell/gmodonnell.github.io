@@ -1,0 +1,57 @@
+Forwarding and Tunneling
+
+Port Forwarding 
+Port Forwarding occurs when traffic for an IP:PORT combination
+end up being redirected to a different IP:PORT combination. This 
+can be necessary when you want to access devices connected to a 
+LAN but not to the internet. 
+
+We can do this using the rinetd tool, which can be installed
+using pacman -S rinetd the /etc/rinetd.conf file is where you 
+place forwarding rules. The rule format is:
+
+bindaddress bindport connectaddress connectport
+
+Example: Redirect any traffic received on port 80 to 
+a different IP address on port 80:
+
+0.0.0.0 80 <TARG IP> 80
+
+is how you would write the rule. If you write this rule and 
+run sudo service rinetd restart you will see a listener on
+the device running on 80. Confirm this with ss -antp | grep 80
+
+Now, any machine that connects to port 80 on the listening 
+machine will be able to access the TARGET IP in the
+forwarding rule. This will give internet access to the 
+blocked machine.
+
+SSH Forwarding
+Encrypted, Bi-Directional, Simple As
+Use SSH to tunnel a local port to a remote server.
+This is useful for pivoting between subnets, like 
+when you compromise a client with 2 network interfaces
+and you can only access 1 from your attacker machine. 
+
+On your victim machine, run this:
+ssh -N -L [bindaddress:]port:host:hostport [username@address]
+
+-N prevents remote command execution,
+and -L creates the local port forward.
+Let's see an example: You compromised a machine behind a firewall
+that can see two subnets. These are 10.11.0.x and 192.168.1.x 
+To reach a machine in the second subnet, we need to pivot through
+the double interface machine. SSH is enabled on the dual machine, 
+so we can port forward through it and enumerate the 192.168.1.x subnet.
+To do this, we run the following command on our attacking machine:
+
+sudo ssh -N -L 0.0.0.0:<PORT>:192.168.1.x:<PORT> user@10.11.0.x
+
+Here, any incoming connection on the attacker at 445 will be forwarded
+to 445 on the 192.168.1.x address through the middle connection at
+10.11.0.x
+
+If we chose to forward 445, for example, we could then query 
+smbclient pointed at localhost and it would actually send 
+queries to the machine at 192.168.1.x:445 This would allow
+us to enumerate samba two subnets away like it were on our own machine. 
