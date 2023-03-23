@@ -85,3 +85,25 @@ socks4 127.0.0.1 8080
 
 now to run commands, you append proxychains to the front of the 
 command and you can run it through the tunnel.
+
+IF YOU ARE RUNNING PROXYCHAINS TO TARGET INTERNAL (Internet Protected)
+services, you have to run your commands targeting 127.0.0.1 because
+the commmand is coming out and being interpreted by the proxied machine.
+Therefore, if you have these devices:
+
+192.168.119.146 (attacker, forwarding)
+192.168.146.52  (victim, receiving forward)
+
+And you want to scan .146.52 for services, if you pass:
+
+proxychains nmap -p- 192.168.146.52
+
+then .146.52 will reach out to the router, resolve its own address
+and scan itself. Instead, you have to pass:
+
+proxychains nmap -p- 127.0.0.1
+
+Which doesn't make any sense initially, but you are feeding commands
+to the device which are then interpreted over there. Port forwarding
+alters your perspective of the network because you take over another
+body.
