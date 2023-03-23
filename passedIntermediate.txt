@@ -24,3 +24,44 @@ do
   wget -q --no-check-certificate $url -O $exp_name
 done
 
+
+MSFTRICKS:
+AutoRunScript set to a script you want to automatically run
+The script has the .rc extension and is like a bash script
+  in terms of its simplicity. The script will execute 
+  automatically when the handler catches the shell.
+You can run scripts on startup by passing:
+  msfconsole -r <script>
+
+Post-Exploitation with msf:
+screenshot takes a screenshot 
+keyscan_start
+keyscan_dump
+keyscan_stop
+^Keylogger control.
+To get anything good on a keylogger, we have to migrate
+the session to the user. Do this with ps, pick a pid 
+that looks good and then migrate <PID> 
+
+There are also modules you can use for post-Exploitation
+bypassuac_injection_winsxs
+mimikatz is kiwi on msf
+
+PIVOTING:
+With msf, pivoting is easy. You can add routes to sessions
+with route add <CIDR> <SESS> 
+This lets you tell msf that there are multiple interfaces
+accessible from a given session. All your commands will
+be autorouted so you just get to sit back.
+
+You can only autoroute from a bind shell because reverse
+shells don't give the compromised endpoint a good path 
+to you.
+
+Using autoroute in combination with the socks4a module 
+lets you run proxychains provided you append the socks4a 
+into your proxychains.conf. 
+
+portfwd is a module that does what you already know how to 
+do.
+
