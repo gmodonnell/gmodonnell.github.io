@@ -1,0 +1,10 @@
+PSEmpire (called Empire) is a powershell and python
+post-exploitation agent. You use it with AD envrionments 
+It uses PS on Windwos and Python on *nix. The original
+project is no longer supported by the devs but 
+BC-SECURITY forked it an released Version 3: 
+https://github.com/BC-SECURITY/Empire 
+
+Empire has listeners like the multi/handler. 
+You can run listeners and stagers from Empire.
+You can also migrate payloads.
