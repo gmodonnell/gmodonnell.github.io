@@ -5,6 +5,9 @@ project is no longer supported by the devs but
 BC-SECURITY forked it an released Version 3: 
 https://github.com/BC-SECURITY/Empire 
 
+the one that works on kali is at:
+https://gitlab.com/kalilinux/packages/powershell-empire
+
 Empire has listeners like the multi/handler. 
 You can run listeners and stagers from Empire.
 You can also migrate payloads.
