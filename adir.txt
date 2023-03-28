@@ -1,0 +1,14 @@
+ACTIVE DIRECTORY:
+AD lets sysadmins update and manage a lot of endpoints at once. Epic. 
+AD is also a huge attack surface that you can't ignore. 
+
+Domain Controllers (DC) are the god emperors of AD Environments. DCs are 
+Windows 2000-2019 servers with the Active Directory Domain Services installed. 
+
+Windows server ships in Core, Nano and Desktop installations. Only Core and 
+Desktop can serve as DCs. Nano installs are too lightweight to handle the 
+work required. 
+
+Domains are created, and objects are attached to it. This can be anything 
+from an endpoint to a Group Policy. Organizational Units are used to 
+keep everything categorized. 
