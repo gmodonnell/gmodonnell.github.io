@@ -4,6 +4,8 @@ AD is also a huge attack surface that you can't ignore.
 
 Domain Controllers (DC) are the god emperors of AD Environments. DCs are 
 Windows 2000-2019 servers with the Active Directory Domain Services installed. 
+DCs have five FSMO roles. Primary Domain Controller is one of them and will 
+always have the most up to date information regarding the Domain. 0
 
 Windows server ships in Core, Nano and Desktop installations. Only Core and 
 Desktop can serve as DCs. Nano installs are too lightweight to handle the 
@@ -12,3 +14,61 @@ work required.
 Domains are created, and objects are attached to it. This can be anything 
 from an endpoint to a Group Policy. Organizational Units are used to 
 keep everything categorized. 
+
+To beat AD, you need to get Domain Admin (DA) or root a DC. 
+
+The first step is Enumeration:
+==============================
+net.exe is a old shitty enumeration tool for AD. But basically always works.
+net user 
+will enumerate all local accounts.
+net user /domain 
+will enumerate all accounts on domain
+net user <username> /domain 
+will give information about that user on domain 
+net group /domain 
+will enumerate all groups on the domain. 
+
+powershell.exe is a better enumeration tool for AD that might be restricted. 
+For example, cmdlet Get-ADUser is only installed by default on DCs and 
+needs admin to run. To enumerate AD with powershell, we need to write a script
+that will leverage LDAP via the DirectorySearcher object. LDAP is an 
+Active Direcotry Service Interfaces (ADSI) provider that lets you search 
+against an AD environment. Using an LDAP provider path as input against the 
+DirecotrySearcher .NET class we can query the PDC for unprivileged info. 
+Here is what that path generally looks like:
+LDAP://HostName[:Port][/DistinguishedName]
+Where Port is an int and DistinguishedName (DN) is derived from the domain.
+To get these pieces, we can use the following PS Command:
+[System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+This should give Domain name, PDC name and other fun information. 
+By leveraging this command we can build the LDAP provider path programatically:
+
+$domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
+$PDC = ($domainObj.PdcRoleOwner).Name
+$SearchString = "LDAP://"
+$SearchString += $PDC + "/"
+$DistinguishedName = "DC=$($domainObj.Name.Replace('.', ',DC='))"
+$SearchString += $DistinguishedName
+$SearchString
+$Searcher = New-Object System.DirectoryServices.DirectorySearcher([ADSI]$SearchString)
+$objDomain = New-Object System.DirectoryServices.DirectoryEntry($SearchString, "corp.com\offsec", "lab")
+$Searcher.SearchRoot = $objDomain
+$Searcher.filter="samAccountType=805306368"
+$Result = $Searcher.FindAll()
+Foreach($obj in $Result)
+{
+    Foreach($prop in $obj.Properties)
+    {
+        $prop
+    }
+    Write-Host "..................."
+}
+
+This script will give us the LDAP:// that we need to start making queries. 
+By adding the $Searcher and $objDomain objects we can actually get the search
+going. Running without the filter will give us every object in the domain 
+which will probably not be helpful. To fix this we have added the samAccountType 
+filter and provided 805206368 (0x30000000 in decimal) because that is the 
+account type for domain users. The for loop at the end just helps with viewing. 
+You can filter for a lot of things, such as .filter="name=Admin"
