@@ -1,47 +1,49 @@
-ACTIVE DIRECTORY:
-AD lets sysadmins update and manage a lot of endpoints at once. Epic. 
-AD is also a huge attack surface that you can't ignore. 
+https://github.com/0xsyr0/OSCP
 
-Domain Controllers (DC) are the god emperors of AD Environments. DCs are 
-Windows 2000-2019 servers with the Active Directory Domain Services installed. 
-DCs have five FSMO roles. Primary Domain Controller is one of them and will 
+ACTIVE DIRECTORY:
+AD lets sysadmins update and manage a lot of endpoints at once. Epic.
+AD is also a huge attack surface that you can't ignore.
+
+Domain Controllers (DC) are the god emperors of AD Environments. DCs are
+Windows 2000-2019 servers with the Active Directory Domain Services installed.
+DCs have five FSMO roles. Primary Domain Controller is one of them and will
 always have the most up to date information regarding the Domain. 0
 
-Windows server ships in Core, Nano and Desktop installations. Only Core and 
-Desktop can serve as DCs. Nano installs are too lightweight to handle the 
-work required. 
+Windows server ships in Core, Nano and Desktop installations. Only Core and
+Desktop can serve as DCs. Nano installs are too lightweight to handle the
+work required.
 
-Domains are created, and objects are attached to it. This can be anything 
-from an endpoint to a Group Policy. Organizational Units are used to 
-keep everything categorized. 
+Domains are created, and objects are attached to it. This can be anything
+from an endpoint to a Group Policy. Organizational Units are used to
+keep everything categorized.
 
-To beat AD, you need to get Domain Admin (DA) or root a DC. 
+To beat AD, you need to get Domain Admin (DA) or root a DC.
 
 The first step is Enumeration:
 ==============================
 net.exe is a old shitty enumeration tool for AD. But basically always works.
-net user 
+net user
 will enumerate all local accounts.
-net user /domain 
+net user /domain
 will enumerate all accounts on domain
-net user <username> /domain 
-will give information about that user on domain 
-net group /domain 
-will enumerate all groups on the domain. 
+net user <username> /domain
+will give information about that user on domain
+net group /domain
+will enumerate all groups on the domain.
 
-powershell.exe is a better enumeration tool for AD that might be restricted. 
-For example, cmdlet Get-ADUser is only installed by default on DCs and 
+powershell.exe is a better enumeration tool for AD that might be restricted.
+For example, cmdlet Get-ADUser is only installed by default on DCs and
 needs admin to run. To enumerate AD with powershell, we need to write a script
-that will leverage LDAP via the DirectorySearcher object. LDAP is an 
-Active Direcotry Service Interfaces (ADSI) provider that lets you search 
-against an AD environment. Using an LDAP provider path as input against the 
-DirecotrySearcher .NET class we can query the PDC for unprivileged info. 
+that will leverage LDAP via the DirectorySearcher object. LDAP is an
+Active Direcotry Service Interfaces (ADSI) provider that lets you search
+against an AD environment. Using an LDAP provider path as input against the
+DirecotrySearcher .NET class we can query the PDC for unprivileged info.
 Here is what that path generally looks like:
 LDAP://HostName[:Port][/DistinguishedName]
 Where Port is an int and DistinguishedName (DN) is derived from the domain.
 To get these pieces, we can use the following PS Command:
 [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
-This should give Domain name, PDC name and other fun information. 
+This should give Domain name, PDC name and other fun information.
 By leveraging this command we can build the LDAP provider path programatically:
 
 $domainObj = [System.DirectoryServices.ActiveDirectory.Domain]::GetCurrentDomain()
@@ -65,10 +67,135 @@ Foreach($obj in $Result)
     Write-Host "..................."
 }
 
-This script will give us the LDAP:// that we need to start making queries. 
+This script will give us the LDAP:// that we need to start making queries.
 By adding the $Searcher and $objDomain objects we can actually get the search
-going. Running without the filter will give us every object in the domain 
-which will probably not be helpful. To fix this we have added the samAccountType 
-filter and provided 805206368 (0x30000000 in decimal) because that is the 
-account type for domain users. The for loop at the end just helps with viewing. 
+going. Running without the filter will give us every object in the domain
+which will probably not be helpful. To fix this we have added the samAccountType
+filter and provided 805206368 (0x30000000 in decimal) because that is the
+account type for domain users. The for loop at the end just helps with viewing.
 You can filter for a lot of things, such as .filter="name=Admin"
+
+Resolving Nested Groups:
++++++++++++++++++++++++++
+net.exe can't resolve nested groups so you have to do that with PS. 
+By changing our Searcher.filter to "(objectClass=Group)" and only printing
+the $obj.Properties.name in a Foreach we can get the name of every group 
+in the. 
+
+Once you get your groups, you can resolve them by setting the filter to 
+name=groupname and printing the $obj.Properties.member. This has to manually 
+be adjusted as you progress downward in the layers of the nested group until
+you hit the bottom. 
+
+Currently Logged on Users:
++++++++++++++++++++++++++++
+Listing users who are logged in to endpoints in the AD Env will help get 
+a map of what's going on. OffSec says use PowerView but BloodHoundAD is 
+goated. 
+
+Import-Module .\PowerView.ps1
+Get-NetLoggedon -ComputerName <endpoint>
+Get-NetSession -ComputerName <dc>
+
+Active users matching your current endpoint and your targeted domain controller 
+are fair game for quick win. 
+
+Enum Via Service Principal Names:
+++++++++++++++++++++++++++++++++++
+An alternative to attacking domain users is attacking service accounts. 
+These accounts can also be high privilege. When applications are executed, 
+they are always run (on Windows) in the context of an OS User. If the user 
+launches the app, the app will launch in the context of the user's perms.
+However, if the system launches the account, the system uses a context-based 
+service account. These are predefined as follows: LocalSystem, LocalService, 
+NetworkService. Domain accounts can also be used for more complex services. 
+
+Apps like SQL, IIS and Exchange are used in an AD environment, a 
+Service Principal Name (SPN) is generated for the service. This SPN 
+associates the service with the AD account it's running under. 
+Group Managed Service Accounts exist to handle these as well, but most
+organizations will use basic Service Accounts because GMSAs require a
+DC to run WinSrv2012 or higher. 
+
+Querying the DC for SPNs using filter="serviceprincipalname=*http*"
+or whatever service we want to query. Then you can just nslookup 
+the fqdns you get from this query.
+
+Authenticating to AD Environments:
+===================================
+Ad Environments use NTLM and Kerberos Authentication mechanisms. WDigest is
+also used on really old systems but you probably won't see it again. 
+
+NTLM Auth:
+++++++++++
+NTLM Authentication is used when a client tries to auth from an IP address
+instead of a hostname. NTLM is also the preferred method when a user tries 
+to auth to a hostname that is not registered on the AD integrated DNS server.
+Third party apps generally use NTLM as well. NTLM is a 7 step protocol
+which involves the client, application server and domain controller.
+
+1.) Client generates an NTLM hash from user provided password.
+2.) Client sends username to the application server
+3.) App Server responds to client username with a nonce or challenge
+4.) Client encrypts the challenge with the NTLM hash (response) and sends to AppSrv
+5.) AppSrv sends username, nonce and response to the DC
+6.) DC Encrypts nonce with NTLM hash on file for user and compares
+7.) DC Sends approve or reject signal to AppSrv.
+
+Kerberos Auth:
+++++++++++++++
+Kerberos uses a ticket system instead of a challenge/response system. 
+A major difference of Kerberos is that users authenticate to the DC first 
+as opposed to talking to the AppSrv. Client sends hashed password+user with 
+timestamp to DC who tries to decrypt it and checks to ensure there are no 
+duplicates (replay attack indicator). This is the Authentication Server 
+Request (AS_REQ) which is met with a reply (AS_REP) containing a session 
+key and a Ticket Granting Ticket (TGT). The TGT cannot be decrypted by the 
+client, and allows the Client to make Ticket Granting Service Requests 
+(TGS_REQ) for up to 10 hours (default setting) before a renewal occurs.
+The renewal does not require password reentry.
+The TGS_REQ contains the User, timestamp, SPN of the desired resource 
+and the TGT. The DC takes the TGS_REQ and makes sure the SPN exists. 
+If the SPN exists, the TGT is decrypted by the DC. The following checks
+are performed:
+1.) The TGT timestamp must be valid.
+2.) The Username from the TGS_REQ must match the TGT user.
+3.) Client IP and TGT IP must match.
+If these all pass, a TGS_REP is sent to client with
+1.) The SPN to which access has been granted
+2.) A session key for the client and SPN to use
+3.) A service ticket.
+
+With the session key and service ticket, the client can send an 
+application request AP_REQ to the application server. The AppSrv
+will then decrypt the session key and service ticket. If the usernames
+for both of these parts matches, the session starts between the client 
+and the AppSrv.
+
+Cached Credential Storage and Retrieval:
+=========================================
+In order to renew a TGT request, M$ has to store password hashes somewhere.
+In current Windows, this is inside the 
+Local Security Authority Subsystem Service (LSASS) memory space. 
+Dumping hashes from LSASS means they can be cracked or passed for access. 
+However, because LSASS is run with SYSTEM perms, you have to have SYSTEM 
+in order to access it. Therefore, getting local admin is the first step to
+getting big hashes. 
+
+Mimikatz is a very popular tool for dumping LSASS and as such is detected 
+often by AV. Instead of running it standalone, you should try a process
+injection through PS to run from memory, or dump the LSASS process memory
+using task manager and move the data to your local machine to analyze with 
+mimikatz instead. 
+
+When run Mimikatz:
+privilege::debug
+sekurlsa::logonpasswords <- Dumps all logged on users and rdp sessions
+sekurlsa::tickets <- Dumps all TGS and TGT data from workstation
+https://fuzzysecurity.com/tutorials/18.html
+Mimikatz can do a lot of crazy shit like import tickets and pull 
+smart card/PIN authentication data as well.
+
+
+Service Account Attacks:
+=========================
