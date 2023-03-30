@@ -199,3 +199,47 @@ smart card/PIN authentication data as well.
 
 Service Account Attacks:
 =========================
+Kerberos does not check to see if a ticket requested by the client is 
+for a SPN they actually have access to. That's the job of the application 
+server. This means you can request a ticket for any service, then extract 
+it from memory and save it to disk. Because the service ticket is 
+encrypted with the hash of the SPN account, you can request the ticket,
+save it, crack it and have the service account's password >:)
+
+Example:
+There is an IIS server with SPN HTTP/CorpWebServer.corp.com
+We can use PS KerberosRequestorSecurityToken class to get a service ticket:
+
+Add-Type -AssemblyName System.IdentityModel
+New-Object System.IdentityModel.Tokens.KerberosRequestorSecurityToken -ArgumentList 'HTTP/CorpWebServer.corp.com'
+
+Add-Type is similar to Import-Module except instead of a new script we are
+just adding prewritten funcs to the namespace. 
+To get the ticket from memory, we can use klist instead of mimikatz, as klist
+is a builtin way to list all cached kerberos tickets. This will verify we have
+the ticket and then we can use KerberosRequestorSecurityToken.GetRequest to get
+the ticket from memory. Alternatively we can use Mimikatz
+
+kerberos::list /export
+
+to get the ticket. Then running tgsrepcrack.py from the kerberoast package will
+run the attack against the service ticket. Kerberoasting is only viable if 
+basic service accounts are being used. If Managed or Group Managed Service 
+Accounts exist, the passwords will be randomly generated 120 character strings
+meaning you're fucked. The kerberoast package has an Invoke-Kerberoast.ps1 
+that will handle grabbing and exporting tickets for all SPNs so you don't 
+need Mimikatz.
+
+
+Stealthy Password Guessing:
+============================
+Using password attacks can get some accounts locked out so maybe have some
+goddamn finesse. Using LDAP and ADSI we can enumerate some password policy
+and get the fucking memes going. 
+net accounts
+will enum domain acct policy. Take note of password properties, lockout
+threshold and lockout observation window. 
+let threshold = n, n-1 login attempts before lockout. These params will
+dictate the settings of a password spray. Enumerating all the users and 
+sending a list of passwords against them below the lockout threshold will
+give you accounts with weak passwords. 
