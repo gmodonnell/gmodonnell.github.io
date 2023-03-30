@@ -243,3 +243,16 @@ let threshold = n, n-1 login attempts before lockout. These params will
 dictate the settings of a password spray. Enumerating all the users and 
 sending a list of passwords against them below the lockout threshold will
 give you accounts with weak passwords. 
+
+There is a script for this in C:\Tools\active_directory on the Windows 
+client in the offsec labs that does this called Spraw-Passwords.ps1
+
+Lateral Movement:
+==================
+When dealing with authentication, Microsoft handles hashes directly.
+This means you often don't need to decrypt a hash before it's usable. 
+
+Pass the Hash:
++++++++++++++++
+This only works for NTLM authenticaion, not Kerberos. However, a lot of stuff
+runs NTLM. Impacket, PsExec and passing-the-hash toolkit. 
