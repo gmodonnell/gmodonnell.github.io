@@ -384,3 +384,61 @@ End Sub
 
 This is a new vector and if you have 135 and 445 you can probably do it 
 to avoid NIDs or host-based IDS.
+
+
+AD Persistence:
+================
+Traditional persistence works in AD environments but there are a few AD-specific
+methods that can help as well.
+
+Golden Tickets:
+++++++++++++++++
+Recall that TGTs are encrypted by the KDC. The secret key used to encrypt the TGT
+is known only to the KDC. This secret key is the password hash of a domain user
+account called krbtgt. If you can get the krbtgt password hash, you can create 
+your own self-made custom TGTs. These are golden tickets. 
+
+Using this method, you could create a TGT that says you are DA and the KDC will
+trust it implicitly because it's encrypted correctly. krbtgt password is not
+automatically changed. Instead it only changes when the domain functional level
+is upgraded from Windows 2003 to 2008. The DFL dictates the capabilities of the
+domain and determines which OS are supported on the DC. Higher FLs enable 
+features, functionality and security mitigations. 
+
+Imagine being an unprivileged user and attempting to psexec to the DC:
+psexec.exe \\<DC> cmd.exe
+and your access is denied. If you have access to the dc otherwise or 
+you have a member of the DAs group. You can cook your golden ticket
+by logging into the DC, running mimikatz and passing:
+privilege::debug
+lsadump::lsa /patch
+This will drop an NTLM hash of krbtgt. Take that and make a golden ticket
+using kerberos::golden, but pass /krbtgt:<hash> instead of rc4. This will
+tell mimikatz that you're making a golden ticket instead of a silver one.
+
+When you make golden tickets you can cook up any user:
+kerberos::golden /user:fakeuser /domain:corp.com /sid:S-1-5-21-1602875587-2787523311-2599479668 /krbtgt:75b60230a2394a812000dbfad8415965 /ptt
+becuase the DC doesn't care and will trust it implicitly. 
+It's recommended to generate one with a sysadmins name tho. With the 
+ticket passed to memory, you can misc::cmd out of mimikatz and 
+psexec into your domain controller. You don't have to do this from a 
+domain joined system because the ticket will be accepted regardless by 
+the KDC. Note that trying to authenticate to the DC using the IP address
+instead of the SPN will default to NTLM auth and will fail.
+
+DCSync:
+========
+Domain Controller Synchronization is a fun way to steal all the 
+hashes of every administrative user on the Domain. While we can do this
+with a mimikatz dump on the DC or pulling the NTDS.dit, but those leave
+logs and logs == crime. There is a builtin function on DCs that lets us do this
+from a remote workstation. 
+
+The Directory Replication Service Remote Protocol users replication to syncrhoize 
+redundant domain controllers so large networks can manage themselves safely. DCs 
+can request an update for a specific object using IDL_DRSGetNCChanges. A DC 
+receiving this request doesn't care if you're also a DC. The only thing that 
+matters is your SID having appropriate privileges. If you log in as a 
+DA on any computer, load mimikatz and run:
+lsadump::dcsync /user:Administrator
+Hope you like hashes. You never have to log into the DC to do this. 
