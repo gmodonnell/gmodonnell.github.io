@@ -1,0 +1,18 @@
+Directory Traversal Attacks:
+============================
+Webapps that use the ?page= param are often vulnerable to 
+directory traversal attacks. 
+
+Linux:
+../../../../../../../../etc/passwd
+get the users and then check their .ssh folder
+if you get private keys you might be able to 
+ssh into the endpoint or network.
+
+Windows:
+C:\inetpub\logs\LogFiles\W3SVC1\
+Logfile location on IIS
+C:\inetpub\wwwroot\web.config
+config file can sometimes have creds.
+
+Remember to \ for windows and / for *nix
