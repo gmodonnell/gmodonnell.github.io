@@ -40,3 +40,70 @@ LFI and RFI works with php, perl, asp, aspx, jsp and js.
 You just need to know which lang the app is running.
 
 
+APIs
+===================
+Gobuster has a feature that lets you enumerate APIs by telling it where to
+change pattern strings. -p is the flag for the pattern feature:
+
+gobuster dir -u http://<TARG ADDR> -w /usr/share/wordlists/...... -p pattern
+
+This tells gobuster to use the 'pattern' file. pattern looks like this:
+
+{GOBSUTER}/v1
+{GOBUSTER}/v2
+
+Every word in the wordlist will be tried in place of the {GOBUSTER}
+meaning a/v1 b/v1 ... a/v2 b/v2 etc 
+
+Once enumerated, you can test API endpoints with curlGobuster has a feature that lets you enumerate APIs by telling it where to
+change pattern strings. -p is the flag for the pattern feature:
+
+gobuster dir -u http://<TARG ADDR> -w /usr/share/wordlists/...... -p pattern
+
+This tells gobuster to use the 'pattern' file. pattern looks like this:
+
+{GOBSUTER}/v1
+{GOBUSTER}/v2
+
+Every word in the wordlist will be tried in place of the {GOBUSTER}
+meaning a/v1 b/v1 ... a/v2 b/v2 etc 
+
+Once enumerated, you can test API endpoints with curl. You can direct the request
+with -i and fill the content with -d:
+
+curl -d '{"password":"lab","username":"offsec","email":"pwn@offsec.com","admin":"True"}'
+-H 'Content-Type: application/json' http://192.168.50.16:5002/users/v1/register
+
+This will send a json request to the target endpoint containing the data we have provided.
+The -H flag adds a header. You can append tokens with this using -H 'Authorization: OAuth <token>'
+or whatever accepted credential they are using.
+
+-X will change the method, so if GET (default) doesn't work, add -X 'PUT' at the start 
+of the request. You can do all this in BURP if it's too confusing with cURL.
+
+
+Cross Site Scripting:
+========================
+XSS has two major categories: Stored and Reflected
+Stored (persistent) XSS happens when you store a payload (crazy). Everyone who visits the webapp will 
+receive the payload because it's being distributed by the server that hosts the app. Forum comment 
+sections are the most common way to make stored XSS happen. 
+
+Reflected XSS happens when the payload is included in a link or crafted request. This requires 
+the attacker to distribute the link to potential victims. Search fields or  results are good vectors 
+for this attack. Anywhere user input is included in error messages is vulnerable as well. 
+
+These XSS types can be client or server side. They can also be DOM-based. 
+
+DOM-Based XSS takes place in the Document Object Model. When HTML is parsed, an internal DOM is generated.
+When user controlled input affects the generation of the DOM, XSS can be generated. When the browser
+parses webpage content and inserted JavaScript is executed, that's DOM-Based XSS.
+
+In webpages, JavaScript is responsible for accessing and modifying the page's DOM. 
+JS is loosely typed, meaning every var type is inferred unless explicitly declared. 
+
+Identify XSS by testing input fields for unsanitized input. Special characters need to be tested:
+< > ' " { } ;
+If these characters are not properly sanitized, you can escape the running code and inject your own.
+
+If the secure or httponly flags are turned off for a cookie you can probably steal it.
