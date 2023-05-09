@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<title>Graham O'Donnell</title>
+<meta name="author" content="Graham O'Donnell">
+<meta name="description" content="I hope you learn something here">
+<meta charset="utf-8">
+<link rel="shortcut icon" href="">
+<link rel="stylesheet" href="https://gmodonnell.github.io/site.css"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico">
+</head>
+
+<body>
+<header class="header">
+<a href="https://gmodonnell.github.io"><h1>Graham O'Donnell</h1></a>
+<h2 style="color:#bb7c35">Security Consultant</h2>
+<nav>
+<a href="/notes/index.html">Notes</a>
+-
+<a href="/writeups/index.html">Writeups</a>
+-
+<a href="/eer/index.html">Resources</a>
+</nav>
+<p>
+This is my virtual notebook. I keep notes here on security stuff.
+</p>
+</header>
+<main class="container">
+<h2>Proxying BurpSuite</h2>
+<article>
+<p>
+When working on a team, setting up a lab environment is the ideal method for 
+working together. This is convenient for the client's
+Blue Team, as they only have to worry about a single IP Address from which 
+all traffic related to the ongoing test will originate.
+</p>
+<p>
+When working through a lab, I have to ssh into the box and use my tools 
+through the CLI. This generally isn't an issue, but if I need to use 
+BurpSuite, the problem of not having a GUI gets in the way. To combat this,
+I use Dynamic Port Forwarding to forward my BurpSuite traffic through the 
+EC2 instance I have an ssh connection with. Here's how to do it:
+</p>
+<p>
+Open BurpSuite, go to Project Options (or user options for a permanent change which I don't recommend).
+Under SOCKS proxy, enable everything and run the SOCKS proxy address as 127.0.0.1. <em>you can't put localhost</em>.
+Next you set the port to whatever you want your port to be. 
+SSH into the box, and set the -D flag with your port matching the port you indicated in BurpSuite.
+Activate your Burp Proxy as usual. The traffic will flow from the browser through burp to your EC2 out into the world.
+</p>
+<h3>Forwarding</h3>
+<p>
+Local port forwards are a good way to ensure a connection takes an unorthodox route. 
+If you're dodging firewalls or routing tools through an access point on an internal
+network. Local port forwards will take outgoing data from a local port,
+and connect it to a different port on the target box. Here is the general format:
+</p>
+<blockquote>
+<pre>
+<code>
+ssh -N -L [port]:localhost:[port] user@domain
+</code>
+</pre>
+</blockquote>
+<p>
+using <code>-N</code> prevents ssh from running a command or opening a shell,
+but will forward the port. You can do this through multiple layers of network,
+for example your device touches a VPS that exists between you and a target network.
+If you have access to a device on that network, you can push traffic from the 
+victim device all the way down to the screen in front of your keyboard.
+</p>
+<blockquote>
+<pre>
+<code>
+ssh -N -R [port]:localhost:[port] user@domain
+</code>
+</pre>
+</blockquote>
+<p>
+Above is a remote port forward, which will set the first port on a remote device to
+accept connections and forward them to the second port on the remote device. 
+</p>
+<ul>
+<li>
+Plant a device on the target network. Set a reverse port forward on it
+to reach back to your lab environment.
+</li>
+<li>
+Set a local port forward from the client device to the lab environment.
+</li>
+<li>
+The data will now kiss in the middle.
+</li>
+</ul>
+<p>
+Dynamic Port Forwards let you push all data from a client through to
+the target machine via a single port. Once it gets to the target 
+device, the packets are then sorted to local ports. Can break.
+</p>
+<blockquote>
+<pre>
+<code>
+ssh -D [port] user@domain
+</code>
+</pre>
+</blockquote>
+<p>
+I don't X-11 forward for GUI applications because I don't know 
+enough about it to run it securely. 
+</p>
+</article>
+</main>
+</body>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<title>Graham O'Donnell</title>
+<meta name="author" content="Graham O'Donnell">
+<meta name="description" content="I hope you learn something here">
+<meta charset="utf-8">
+<link rel="shortcut icon" href="">
+<link rel="stylesheet" href="https://gmodonnell.github.io/site.css"/>
+<link rel="shortcut icon" type="image/ico" href="favicon.ico">
+
+</head>
+
+<body>
+<header class="header">
+<a href="https://gmodonnell.github.io"><h1>Graham O'Donnell</h1></a>
+<h2 style="color:#bb7c35">Security Consultant</h2>
+<nav>
+<a href="/notes/index.html">Notes</a>
+-
+<a href="/writeups/index.html">Writeups</a>
+-
+<a href="/eer/index.html">Resources</a>
+</nav>
+<p>
+This is my virtual notebook. I keep notes here on security stuff.
+</p>
+</header>
+<main class="container">
+
+
+<article>
+<h1>HyperText Transfer Protocol</h1>
+<p>
+HTTP/S is a Layer 5 Protocol. It is the most prominent Layer 5 protocol 
+in terms of volume. SMTP and FTP are also Layer 5 protocols. Things to
+consider about HTTP:
+</p>
+<blockquote>
+<ul>
+<li>HTTP is used to transfer HTML and its associated code (JS, CSS, etc.)</li>
+<li>HTTP is text-based, which means it's human readable if you intercept it.</li>
+<li>HTTP is based on TCP. </li>
+<li>HTTP uses TCP 80 as a "default port". HTTPS uses 443.</li>
+</ul>
+</blockquote>
+<p>
+HTTP/S files are structured text files served from a node containing logical 
+links to other nodes containing more structured text files. HTTP handles most 
+of our web traffic, and is the protocol we rely on to deliver 
+HyperText Markup Language (HTML) to clients. HTTP can also deliver files of 
+most any type. Multiple connections can be opened on the same device if you
+want higher throughput or a variety of resources at once. Truly a great protocol. 
+Tim Berners-Lee has a net worth of $10 million. Humanity has strayed from God's light.
+</p>
+<h3>Response and Request Types</h3>
+<p>
+There are a number of response and request types used by HTTP to make the client/server
+negotiation run smoothly. Request types are issued from the client to the webserver. 
+</p>
+<blockquote>
+<pre>
+    <b>GET</b> - requests a resource from the webserver
+   <b>POST</b> - sends user input, like form data or chats
+   <b>HEAD</b> - retreives the header information only
+    <b>PUT</b> - upload client file to server. Internet FTP!
+  <b>TRACE</b> - acks to client
+<b>OPTIONS</b> - shows the HTTP methods supported by the server
+<b>CONNECT</b> - pushes the connection upward to a secure environment
+  <b>PATCH</b> - passes updates, rarely seen
+</pre>
+</blockquote>
+<p>
+Response codes are returned based on what the server is able to do with
+your request. They are categorized numerically.
+</p>
+<blockquote>
+<pre>
+<b>100</b> - Informational Status Code. (100 Working on Request)
+<b>200</b> - OK. Anything 2xx is good! You have succeeded.
+<b>300</b> - Handles Types of Redirections. (301 Moved Permanently)
+<b>400</b> - Contains Errors (404 Not Found, 403 Unauthorized)
+<b>500</b> - Internal Server Errors (500 Internal, 501 Not Implemented)
+</pre>
+</blockquote>
+<p>
+400 Errors are Client Side errors, while 500 Errors are Server Side.
+</p>
+
+</article>
+</main>
+</body>
